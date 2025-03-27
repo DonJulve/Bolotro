@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Bolotro</title>
+  <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+</head>
+
+<body>
+	<!-- El canvas, que permite renderizar con WebGL -->
+	<canvas id="gl-canvas" width="1024" height="512">
+		<p>Oops ... your browser doesn't support the HTML5 canvas element</p>
+	</canvas>
+	<p id="fuerza"></p>
+
+	<!-- Vertex shader -->
+	<script id="plane-vertex-shader" type="x-shader/x-vertex">
+		attribute vec3 vPosition;
+		attribute vec4 vColor;
+
+		uniform mat4 model; // model matrix
+		uniform mat4 view; // view matrix 
+		uniform mat4 projection; // projection matrix
+
+		varying vec3 origPos;
+		void main() 
+		{
+			origPos = vPosition;
+			gl_Position = projection * view * model * vec4(vPosition, 1);
+		}
+   </script>
+
+	<script id="sphere-vertex-shader" type="x-shader/x-vertex">
+		attribute vec3 vPosition;
+
+		uniform mat4 model; // model matrix
+		uniform mat4 view; // view matrix 
+		uniform mat4 projection; // projection matrix
+
+		varying vec3 origPos;
+		void main() 
+		{
+			origPos = vPosition;
+			gl_Position = projection * view * model * vec4(vPosition, 1);
+		}
+   </script>
+
+	<!-- Fragment shader -->
+	<script id="plane-fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;
+		uniform vec4 baseColor;
+
+		varying vec3 origPos;
+
+		void main() 
+		{ 
+			gl_FragColor = vec4(0.2, 0.2, 0.2, 1.0);
+		}
+	</script>
+
+	<script id="sphere-fragment-shader" type="x-shader/x-fragment">
+		precision mediump float;
+		uniform vec4 baseColor;
+
+		varying vec3 origPos;
+
+		vec2 cart2rect(in vec3 pos)
+		{
+			vec3 norm_pos = normalize(pos);
+			float rho = atan(norm_pos.y, norm_pos.x);
+			if (norm_pos.x == 0.0) {
+				rho = 0.0;
+			}
+			return vec2(rho, norm_pos.z);
+		}
+
+		float checkerboard(in vec2 coords)
+		{
+			if (coords.x <= 0.0) {
+				if (coords.y <= 0.0) {
+					return 0.5;
+				} else {
+					return 1.0;
+				}
+			} else {
+				if (coords.y <= 0.0) {
+					return 1.0;
+				} else {
+					return 0.5;
+				}
+			}
+		}
+
+		void main() 
+		{ 
+			vec2 rectCoords = cart2rect(origPos);
+
+			gl_FragColor = vec4(baseColor.xyz * checkerboard(rectCoords), 1.0);
+		}
+	</script>
+
+	<!-- Ficheros Javascript externos. 
+		Los tres primeros son utilidades comunes (Ed Angel's code: https://www.cs.unm.edu/~angel/BOOK/INTERACTIVE_COMPUTER_GRAPHICS/SEVENTH_EDITION/) 
+		El resto son código Javascript que editaremos para el juego -->
+	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+	<script type="text/javascript" src="../Common/initShaders.js"></script>
+	<script type="text/javascript" src="../Common/MVnew.js"></script>
+	<script type="text/javascript" src="Bolotro_geometria.js"></script>
+	<script type="text/javascript" src="Bolotro_base.js"></script>
+</body>
+</html>
