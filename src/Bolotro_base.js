@@ -32,8 +32,9 @@ var shootForce = 0.0; //Fuerza de lanzamiento
 const maxShootForce = 18.0; //Maxima fuerza de lanzamiento
 var shootStep = 0.1; //Incremento de la fuerza de lanzamiento
 var isCharging = false; //Si se esta cargando la bola
+var shootForceDirection = 1; // 1 para subir, -1 para bajar
 
-const medidorFuerza = document.getElementById("fuerza"); //Elemento del html que muestra la fuerza PROVISIONAL
+const forceBar = document.getElementById("force-bar");
 
 var planeProgramInfo = {
 	program: {},
@@ -426,31 +427,21 @@ function elastic_collision(sphere1, sphere2) {
 }
 
 function reset_sphere_position(sphere) {
-    let newPosition;
-    let collision;
-    do {
-        collision = false;
-        newPosition = [5 * (2 * Math.random() - 1), 5 * (2 * Math.random() - 1), sphere.radius / 2.0 + 5 * (2 * Math.random() - 1)];
-
-        for (let i = 0; i < entities.length; i++) {
-            if (entities[i].type === "sphere" && entities[i] !== sphere) {
-                if (check_sphere_sphere_col({ position: newPosition, radius: sphere.radius }, entities[i])) {
-                    collision = true;
-                    break;
-                }
-            }
-        }
-    } while (collision);
-
-    sphere.position = newPosition;
-	
-    // Si la esfera es la controladora, reiniciar la velocidad a cero.
-    if (entities.indexOf(sphere) === sphereControllerIndex) {
+   if (entities.indexOf(sphere) === sphereControllerIndex) {
+        // Reiniciar posición inicial
+        sphere.position = subtract(eye, vecPosInicial);
+        
+        // Reiniciar velocidad
         sphere.velocity = [0.0, 0.0, 0.0];
-    } else {
-        // Para las demás, restaurar la velocidad inicial guardada.
-        sphere.velocity = sphere.initialVelocity.slice();
-    }
+        
+        // Reiniciar orientación
+        sphere.orientation = mat4();
+        
+        // Permitir volver a disparar
+        hasShoot = false;
+        shootForce = 0.0;
+        forceBar.style.width = "0%"; // Resetear la barra
+    } 
 }
 
 //Derecha true obviamente 
@@ -523,12 +514,30 @@ window.addEventListener("keydown", function (event) {
 		case "Shift":
 			shiftDown = true;
 			break;
+    case "r":
+      reset_sphere_position(entities[sphereControllerIndex]);
+      break;
+    case "R":
+      reset_sphere_position(entities[sphereControllerIndex]);
+      break;
 		case " ":
-			if(!hasShoot){
-				medidorFuerza.innerHTML = "Fuerza: " + shootForce;
-				if(shootForce < maxShootForce) shootForce += shootStep;
-			}
-			break;
+      if(!hasShoot){
+        shootForce += shootStep * shootForceDirection;
+
+        // Cambia la dirección cuando llega a los límites
+        if (shootForce >= maxShootForce) {
+            shootForceDirection = -1;
+            shootForce = maxShootForce;
+        } else if (shootForce <= 0) {
+            shootForceDirection = 1;
+            shootForce = 0;
+        }
+
+        // Actualizar la barra de fuerza
+        let forcePercentage = (shootForce / maxShootForce) * 100;
+        forceBar.style.width = forcePercentage + "%";
+    }
+    break;
 	}
 });
 
@@ -539,8 +548,14 @@ window.addEventListener("keyup", function (event) {
 			shiftDown = false;
 			break;
 		case " ":
-			if(!hasShoot) lanzarBola();
-			break;
+      if(!hasShoot) {
+        lanzarBola();
+        // Resetear la barra después de un pequeño retraso
+        setTimeout(() => {
+            forceBar.style.width = "0%";
+        }, 200);
+    }
+    break;
 	}
 });
 
