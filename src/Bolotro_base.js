@@ -536,6 +536,10 @@ window.addEventListener("keydown", function (event) {
         // Actualizar la barra de fuerza
         let forcePercentage = (shootForce / maxShootForce) * 100;
         forceBar.style.width = forcePercentage + "%";
+
+        // Calcular el color basado en el porcentaje (verde -> amarillo -> rojo)
+        let hue = (1 - (forcePercentage / 100)) * 120; // 0 (verde) a 120 (rojo)
+        forceBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
     }
     break;
 	}
