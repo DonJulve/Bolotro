@@ -11,6 +11,14 @@ var projection = new mat4();	// create a projection matrix and set it to the ide
 
 var eye, target, up;			// for view matrix
 
+// Valores iniciales de la cámara
+var initialEye = vec3(10.0, 0.0, 10.0);
+var initialTarget = subtract(initialEye, vec3(10.0, 0.0, 10.0));
+var initialUp = vec3(0.0, 0.0, 1.0);
+var initialVecTarget = vec3(10.0, 0.0, 10.0);
+var initialVecPosInicial = vec3(5.0, 0.0, 5.0);
+var initialRotationAngle = 0;
+
 var gravity = 9.8;
 
 // Variables para el control de la esfera
@@ -30,7 +38,7 @@ var rotationAngle = 0; //Angulo de rotacion solo se usará para no salirse de lo
 const maxRotation = 70; //Maxima rotacion
 var shootForce = 0.0; //Fuerza de lanzamiento
 const maxShootForce = 18.0; //Maxima fuerza de lanzamiento
-var shootStep = 0.1; //Incremento de la fuerza de lanzamiento
+var shootStep = 0.3; //Incremento de la fuerza de lanzamiento
 var isCharging = false; //Si se esta cargando la bola
 var shootForceDirection = 1; // 1 para subir, -1 para bajar
 
@@ -140,6 +148,13 @@ window.onload = function init() {
 	entities[1].position = subtract(eye, vecPosInicial);
 	entities[1].orientation = mat4();
 
+  // Inicializar valores de cámara
+  eye = initialEye;
+  target = initialTarget;
+  up = initialUp;
+  vecTarget = initialVecTarget;
+  vecPosInicial = initialVecPosInicial;
+  rotationAngle = initialRotationAngle;
 	
 
 	lastTick = Date.now();
@@ -277,9 +292,9 @@ function colisions_update(dt){
 
             // Mover la esfera fuera del plano
             let effectiveRadius = entity.radius * 0.5;
-			entity.position[0] -= plane_normal[0] * (distance - effectiveRadius);
-			entity.position[1] -= plane_normal[1] * (distance - effectiveRadius);
-			entity.position[2] -= plane_normal[2] * (distance - effectiveRadius);
+			      entity.position[0] -= plane_normal[0] * (distance - effectiveRadius);
+			      entity.position[1] -= plane_normal[1] * (distance - effectiveRadius);
+			      entity.position[2] -= plane_normal[2] * (distance - effectiveRadius);
 
 
             // Actualizar la velocidad (choque elástico)
@@ -428,6 +443,17 @@ function elastic_collision(sphere1, sphere2) {
 
 function reset_sphere_position(sphere) {
    if (entities.indexOf(sphere) === sphereControllerIndex) {
+        // Restaurar valores iniciales de la cámara
+        eye = initialEye;
+        target = initialTarget;
+        up = initialUp;
+        vecTarget = initialVecTarget;
+        vecPosInicial = initialVecPosInicial;
+        rotationAngle = initialRotationAngle;
+        
+        // Recalcular view matrix
+        view = lookAt(eye, target, up);
+        
         // Reiniciar posición inicial
         sphere.position = subtract(eye, vecPosInicial);
         
@@ -478,6 +504,8 @@ function rotateCamera(direccion){
 	target = subtract(eye, vecTarget); //Recalculamos el target
 	view = lookAt(eye,target,up); //Recalculamos la vista
 	entities[sphereControllerIndex].position = subtract(eye, vecPosInicial); //Movemos la bola a donde toque
+  let rotationMatrix = direccion ? rotate(-rotateStep, up) : rotate(rotateStep, up);
+  entities[sphereControllerIndex].orientation = mult(rotationMatrix, entities[sphereControllerIndex].orientation);
 
 	return;
 }
