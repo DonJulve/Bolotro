@@ -56,13 +56,19 @@ var sphereProgramInfo = {
 	attribLocations: {},
 };
 
+var cubePorgramInfo = {
+	program: {},
+	uniformLocations: {},
+	attribLocations: {},
+};
+
 // List of objects to draw
 var objectsToDraw = [
 	{
 		programInfo: planeProgramInfo,
 		pointsArray: pointsPlane, 
 		uniforms: {
-			u_color: [1.0, 1.0, 1.0, 1.0],
+			u_color: [0.2, 0.2, 0.2, 1.0],
 			u_model: new mat4(),
 		},
 		primType: "triangles",
@@ -72,6 +78,15 @@ var objectsToDraw = [
 		pointsArray: pointsSphere, 
 		uniforms: {
 			u_color: [1.0, 1.0, 1.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+	{
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
 			u_model: new mat4(),
 		},
 		primType: "triangles",
@@ -91,6 +106,11 @@ var entities = [
 		rotation: [0.0, 0.0, 0.0],
 		radius: 1.5,
 		velocity: [0.0, 0.0, 0.0]
+	},
+	{
+		type: "cube",
+		position: [0.0, 0.0, 0.0],
+		rotation: [0.0, 0.0, 0.0]
 	}
 ]
 
@@ -134,6 +154,14 @@ window.onload = function init() {
 	sphereProgramInfo.uniformLocations.projection = gl.getUniformLocation(sphereProgramInfo.program, "projection");
 	sphereProgramInfo.uniformLocations.baseColor = gl.getUniformLocation(sphereProgramInfo.program, "baseColor");
 	sphereProgramInfo.attribLocations.vPosition = gl.getAttribLocation(sphereProgramInfo.program, "vPosition");
+
+	//Save the attribute and uniform locations for the cube program
+	cubePorgramInfo.program = initShaders(gl, "plane-vertex-shader", "plane-fragment-shader");
+	cubePorgramInfo.uniformLocations.model = gl.getUniformLocation(cubePorgramInfo.program, "model");
+	cubePorgramInfo.uniformLocations.view = gl.getUniformLocation(cubePorgramInfo.program, "view");
+	cubePorgramInfo.uniformLocations.projection = gl.getUniformLocation(cubePorgramInfo.program, "projection");
+	cubePorgramInfo.uniformLocations.baseColor = gl.getUniformLocation(cubePorgramInfo.program, "baseColor");
+	cubePorgramInfo.attribLocations.vPosition = gl.getAttribLocation(cubePorgramInfo.program, "vPosition");
 
 	// Set up viewport 
 	gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
