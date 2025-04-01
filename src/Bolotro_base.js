@@ -109,8 +109,11 @@ var entities = [
 	},
 	{
 		type: "cube",
-		position: [0.0, 0.0, 0.0],
-		rotation: [0.0, 0.0, 0.0]
+		position: [0.0, 0.0, 1.0],
+		rotation: [0.0, 0.0, 0.0],
+    scale: [1.0, 1.0, 2.0],
+    velocity: [0.0, 0.0, 0.0],
+    isFalling: false
 	}
 ]
 
@@ -268,87 +271,178 @@ function update(dt) {
 			
 			objectsToDraw[index].uniforms.u_model = transform;
 		}
+    else if(entity.type === "cube") {
+            // Rotación dinámica durante la caída
+            if(entity.isFalling) {
+                // Actualizar rotación basada en la velocidad
+                entity.rotation[0] += entity.velocity[1] * 0.5 * dt * 180/Math.PI;
+                entity.rotation[1] += entity.velocity[0] * 0.5 * dt * 180/Math.PI;
+                entity.rotation[2] += entity.velocity[2] * 0.2 * dt * 180/Math.PI;
+            }
 
+            // Construir matriz de transformación
+            let transform = translate(entity.position[0], entity.position[1], entity.position[2]);
+            
+            let ejeX = vec3(1.0, 0.0, 0.0);
+			      transform = mult(rotate(entity.rotation[0], ejeX), transform);
+			      let ejeY = vec3(0.0, 1.0, 0.0);
+			      transform = mult(rotate(entity.rotation[1], ejeY), transform);
+			      let ejeZ = vec3(0.0, 0.0,1.0);
+			      transform = mult(rotate(entity.rotation[2], ejeZ), transform);
+			      transform = mult(translate(entity.position[0], entity.position[1], entity.position[2]), transform);
+            
+            objectsToDraw[index].uniforms.u_model = transform;
+        }
 	});
 }
 
 function physics_update(dt) {
     var gravity_ac = gravity;
     entities.forEach(function (entity, index) {
-        if (entity.type !== "sphere") return;
+        if (entity.type === "sphere") {
+            // Aplicar la fuerza solo a la esfera controladora
+            if (index === sphereControllerIndex) {
+                entity.velocity[0] += appliedForce[0] * dt;
+                entity.velocity[1] += appliedForce[1] * dt;
 
-        // Aplicar la fuerza solo a la esfera controladora
-        if (index === sphereControllerIndex) {
-            entity.velocity[0] += appliedForce[0] * dt;
-            entity.velocity[1] += appliedForce[1] * dt;
-
-            // Limitar la velocidad máxima
-            let speed = length(vec3(entity.velocity[0], entity.velocity[1], 0.0));
-            if (speed > maxSpeed) {
-                entity.velocity[0] = (entity.velocity[0] / speed) * maxSpeed;
-                entity.velocity[1] = (entity.velocity[1] / speed) * maxSpeed;
+                // Limitar la velocidad máxima
+                let speed = length(vec3(entity.velocity[0], entity.velocity[1], 0.0));
+                if (speed > maxSpeed) {
+                    entity.velocity[0] = (entity.velocity[0] / speed) * maxSpeed;
+                    entity.velocity[1] = (entity.velocity[1] / speed) * maxSpeed;
+                }
             }
+
+            // Aplicar gravedad a la esfera
+            entity.velocity[2] -= gravity_ac * dt;
+
+            // Actualizar posición de la esfera
+            entity.position[0] += entity.velocity[0] * dt;
+            entity.position[1] += entity.velocity[1] * dt;
+            entity.position[2] += entity.velocity[2] * dt;
+
+        } else if (entity.type === "cube" && entity.isFalling) {
+            // Física para cubos en caída
+            let airResistance = 0.99;  // Resistencia del aire
+            let rotationalForce = 0.5; // Fuerza rotacional
+
+            // Aplicar gravedad al cubo
+            entity.velocity[2] -= gravity_ac * dt;
+
+            // Aplicar resistencia del aire
+            entity.velocity[0] *= airResistance;
+            entity.velocity[1] *= airResistance;
+            entity.velocity[2] *= airResistance;
+
+            // Actualizar posición del cubo
+            entity.position[0] += entity.velocity[0] * dt;
+            entity.position[1] += entity.velocity[1] * dt;
+            entity.position[2] += entity.velocity[2] * dt;
+
+            // Actualizar rotación del cubo
+            entity.rotation[0] += (entity.velocity[0] * rotationalForce) * dt;
+            entity.rotation[1] += (entity.velocity[1] * rotationalForce) * dt;
+            entity.rotation[2] += (entity.velocity[2] * rotationalForce) * dt;
+
+            // Limitar rotación a 360 grados
+            entity.rotation = entity.rotation.map(angle => angle % 360);
         }
-
-        // Aplicar gravedad
-        entity.velocity[2] -= gravity_ac * dt;
-
-        // Actualizar posición
-        entity.position[0] += entity.velocity[0] * dt;
-        entity.position[1] += entity.velocity[1] * dt;
-        entity.position[2] += entity.velocity[2] * dt;
     });
 }
 
 function colisions_update(dt){
+    // Colisiones de esferas
+    entities.forEach(function(entity, index) {
+        if(entity.type !== "sphere") return;
 
-	entities.forEach(function(entity, index) {
-		if(entity.type!="sphere") return;
-
-		if(check_sphere_plane_col(entity,entities[0]))
-		{
-			// Obtener la normal del plano
+        // Colisión esfera-plano
+        if(check_sphere_plane_col(entity, entities[0])) {
             let plane_normal = getPlaneNormal(entities[0]);
             plane_normal = vec3(plane_normal[0], plane_normal[1], plane_normal[2]);
             plane_normal = normalize(plane_normal);
 
-            // Corregir la posición de la esfera
             let sphere_pos = vec3(entity.position[0], entity.position[1], entity.position[2]);
             let plane_point = vec3(entities[0].position[0], entities[0].position[1], entities[0].position[2]);
+            
             let d = dot(plane_normal, plane_point);
             let distance = dot(plane_normal, sphere_pos) - d;
 
-            // Mover la esfera fuera del plano
             let effectiveRadius = entity.radius * 0.5;
-			      entity.position[0] -= plane_normal[0] * (distance - effectiveRadius);
-			      entity.position[1] -= plane_normal[1] * (distance - effectiveRadius);
-			      entity.position[2] -= plane_normal[2] * (distance - effectiveRadius);
+            entity.position[0] -= plane_normal[0] * (distance - effectiveRadius);
+            entity.position[1] -= plane_normal[1] * (distance - effectiveRadius);
+            entity.position[2] -= plane_normal[2] * (distance - effectiveRadius);
 
-
-            // Actualizar la velocidad (choque elástico)
             let velocity = vec3(entity.velocity[0], entity.velocity[1], entity.velocity[2]);
             let dot_product = dot(velocity, plane_normal);
-
-            // Reflejar la velocidad respecto al plano
+            
             entity.velocity[0] -= boundForce * dot_product * plane_normal[0];
             entity.velocity[1] -= boundForce * dot_product * plane_normal[1];
             entity.velocity[2] -= boundForce * dot_product * plane_normal[2];
+        }
 
-		}
-
-		for (let i = index + 1; i < entities.length; i++) {
-            if (entities[i].type === "sphere" && check_sphere_sphere_col(entity, entities[i])) {
-                elastic_collision(entity, entities[i]);
+        // Colisión esfera-cubo
+        for (let i = index + 1; i < entities.length; i++) {
+            if (entities[i].type === "cube" && check_sphere_cube_col(entity, entities[i])) {
+                handle_sphere_cube_collision(entity, entities[i]);
             }
         }
 
-        // Reset position if sphere goes out of bounds
+        // Resetear posición si sale de los límites
         if (entity.position[2] < -10) {
             reset_sphere_position(entity);
         }
-	});
-}
+    });
 
+    // Colisiones de cubos
+    entities.forEach(function(entity, index) {
+        if(entity.type !== "cube" || !entity.isFalling) return;
+
+        // Colisión cubo-plano
+        if(check_cube_plane_col(entity, entities[0])) {
+            let plane_normal = getPlaneNormal(entities[0]);
+            plane_normal = vec3(plane_normal[0], plane_normal[1], plane_normal[2]);
+            plane_normal = normalize(plane_normal);
+
+            let cube_center = vec3(entity.position[0], entity.position[1], entity.position[2]);
+            let plane_point = vec3(entities[0].position[0], entities[0].position[1], entities[0].position[2]);
+            
+            let d = dot(plane_normal, plane_point);
+            let distance = dot(plane_normal, cube_center) - d;
+
+            // Calcular radio efectivo del cubo
+            let effective_radius = 0.5 * (
+                Math.abs(entity.scale[0] * plane_normal[0]) + 
+                Math.abs(entity.scale[1] * plane_normal[1]) + 
+                Math.abs(entity.scale[2] * plane_normal[2])
+            );
+
+            // Corregir posición
+            entity.position[0] -= plane_normal[0] * (distance - effective_radius);
+            entity.position[1] -= plane_normal[1] * (distance - effective_radius);
+            entity.position[2] -= plane_normal[2] * (distance - effective_radius);
+
+            // Calcular nueva velocidad
+            let velocity = vec3(entity.velocity[0], entity.velocity[1], entity.velocity[2]);
+            let dot_product = dot(velocity, plane_normal);
+            
+            // Rebote con amortiguación
+            entity.velocity[0] -= 1.5 * dot_product * plane_normal[0];
+            entity.velocity[1] -= 1.5 * dot_product * plane_normal[1];
+            entity.velocity[2] -= 1.5 * dot_product * plane_normal[2];
+
+            // Amortiguación adicional
+            entity.velocity[0] *= 0.6;
+            entity.velocity[1] *= 0.6;
+            entity.velocity[2] *= 0.6;
+
+            // Detener caída si la velocidad es muy baja
+            if(length(vec3(entity.velocity[0], entity.velocity[1], entity.velocity[2])) < 0.5) {
+                entity.isFalling = false;
+                entity.velocity = [0, 0, 0];
+            }
+        }
+    });
+}
 //----------------------------------------------------------------------------
 // Colisiones entre esferas y planos
 //----------------------------------------------------------------------------
@@ -426,48 +520,145 @@ function getPlaneNormal(plane) {
 }
 
 //----------------------------------------------------------------------------
-// Colisiones entre esferas
+// Colisiones entre esfera y cubo
 //----------------------------------------------------------------------------
 
-function check_sphere_sphere_col(sphere1, sphere2) {
-    // Usar el radio efectivo (la esfera se dibuja a la mitad de su valor físico)
-    let effectiveRadius1 = sphere1.radius * 0.5;
-    let effectiveRadius2 = sphere2.radius * 0.5;
+function check_sphere_cube_col(sphere, cube) {
+    // Calcular la mitad de las dimensiones del cubo
+    let halfX = cube.scale[0] / 2;
+    let halfY = cube.scale[1] / 2;
+    let halfZ = cube.scale[2] / 2;
 
-    let dx = sphere1.position[0] - sphere2.position[0];
-    let dy = sphere1.position[1] - sphere2.position[1];
-    let dz = sphere1.position[2] - sphere2.position[2];
-    let distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    // Calcular los límites del cubo en el mundo
+    let cubeMinX = cube.position[0] - halfX;
+    let cubeMaxX = cube.position[0] + halfX;
+    let cubeMinY = cube.position[1] - halfY;
+    let cubeMaxY = cube.position[1] + halfY;
+    let cubeMinZ = cube.position[2] - halfZ;
+    let cubeMaxZ = cube.position[2] + halfZ;
 
-    return distance < (effectiveRadius1 + effectiveRadius2);
+    // Encontrar el punto más cercano en el cubo a la esfera
+    let closestX = Math.max(cubeMinX, Math.min(sphere.position[0], cubeMaxX));
+    let closestY = Math.max(cubeMinY, Math.min(sphere.position[1], cubeMaxY));
+    let closestZ = Math.max(cubeMinZ, Math.min(sphere.position[2], cubeMaxZ));
+
+    // Calcular la distancia entre el punto más cercano y el centro de la esfera
+    let dx = sphere.position[0] - closestX;
+    let dy = sphere.position[1] - closestY;
+    let dz = sphere.position[2] - closestZ;
+
+    let distanceSquared = dx*dx + dy*dy + dz*dz;
+    let sphereRadius = sphere.radius * 0.5; // Radio efectivo
+
+    return distanceSquared < (sphereRadius * sphereRadius);
 }
 
+function handle_sphere_cube_collision(sphere, cube) {
+    // Calcular el punto más cercano en el cubo
+    let halfX = cube.scale[0] / 2;
+    let halfY = cube.scale[1] / 2;
+    let halfZ = cube.scale[2] / 2;
 
-function elastic_collision(sphere1, sphere2) {
-    let dx = sphere1.position[0] - sphere2.position[0];
-    let dy = sphere1.position[1] - sphere2.position[1];
-    let dz = sphere1.position[2] - sphere2.position[2];
-    let distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    let cubeMinX = cube.position[0] - halfX;
+    let cubeMaxX = cube.position[0] + halfX;
+    let cubeMinY = cube.position[1] - halfY;
+    let cubeMaxY = cube.position[1] + halfY;
+    let cubeMinZ = cube.position[2] - halfZ;
+    let cubeMaxZ = cube.position[2] + halfZ;
 
-    let normal = vec3(dx / distance, dy / distance, dz / distance);
+    let closestX = Math.max(cubeMinX, Math.min(sphere.position[0], cubeMaxX));
+    let closestY = Math.max(cubeMinY, Math.min(sphere.position[1], cubeMaxY));
+    let closestZ = Math.max(cubeMinZ, Math.min(sphere.position[2], cubeMaxZ));
 
-    let relativeVelocity = subtract(vec3(sphere1.velocity[0], sphere1.velocity[1], sphere1.velocity[2]), 
-                                    vec3(sphere2.velocity[0], sphere2.velocity[1], sphere2.velocity[2])); 
-    let velocityAlongNormal = dot(relativeVelocity, normal);
+    let dx = sphere.position[0] - closestX;
+    let dy = sphere.position[1] - closestY;
+    let dz = sphere.position[2] - closestZ;
 
-    if (velocityAlongNormal > 0) return;
+    // Calcular la normal de la colisión
+    let normal = normalize(vec3(dx, dy, dz));
+    let penetration = (sphere.radius * 0.5) - Math.sqrt(dx*dx + dy*dy + dz*dz);
 
-    let e = 1.0; // Coeficiente de restitución (1 para colisión elástica)
-    let j = -(1 + e) * velocityAlongNormal;
-    j /= (1 / sphere1.radius + 1 / sphere2.radius);
+    // Corregir posición de la esfera
+    sphere.position[0] += normal[0] * penetration;
+    sphere.position[1] += normal[1] * penetration;
+    sphere.position[2] += normal[2] * penetration;
 
-    let impulse = mult(j, normal);
+    // Reflejar la velocidad
+    let velocity = vec3(sphere.velocity[0], sphere.velocity[1], sphere.velocity[2]);
+    let dotProd = dot(velocity, normal);
+    sphere.velocity[0] -= 2 * dotProd * normal[0];
+    sphere.velocity[1] -= 2 * dotProd * normal[1];
+    sphere.velocity[2] -= 2 * dotProd * normal[2];
 
-    sphere1.velocity = add(vec3(sphere1.velocity[0], sphere1.velocity[1], sphere1.velocity[2]), 
-                           mult(1 / sphere1.radius, impulse));
-    sphere2.velocity = subtract(vec3(sphere2.velocity[0], sphere2.velocity[1], sphere2.velocity[2]), 
-                                mult(1 / sphere2.radius, impulse));
+    // Aplicar amortiguación
+    sphere.velocity[0] *= 0.8;
+    sphere.velocity[1] *= 0.8;
+    sphere.velocity[2] *= 0.8;
+
+    // Aplicar fuerza al cubo
+    let impactForce = 0.5; // Ajustar según sea necesario
+    cube.isFalling = true;
+    
+    // Calcular dirección de la fuerza
+    let forceDirection = normalize(vec3(
+        sphere.position[0] - cube.position[0],
+        sphere.position[1] - cube.position[1],
+        sphere.position[2] - cube.position[2]
+    ));
+    
+    // Aplicar velocidad inicial al cubo
+    cube.velocity = [
+        forceDirection[0] * impactForce * 2,
+        forceDirection[1] * impactForce * 2,
+        forceDirection[2] * impactForce + 3.0,
+    ];
+    
+    // Añadir rotación de caída
+    let rotationAmount = 30; // Grados
+    cube.rotation = [
+        rotationAmount * forceDirection[1],
+        rotationAmount * forceDirection[0],
+        0
+    ];
 }
+
+//----------------------------------------------------------------------------
+// Colision cubo plano
+//----------------------------------------------------------------------------
+
+function check_cube_plane_col(cube, plane) {
+    let plane_normal = getPlaneNormal(plane);
+    plane_normal = vec3(plane_normal[0], plane_normal[1], plane_normal[2]); // Asegurar tipo vec3
+    plane_normal = normalize(plane_normal);
+
+    let plane_point = vec3(plane.position[0], plane.position[1], plane.position[2]); // Convertir a vec3
+    let d = dot(plane_normal, plane_point);
+
+    let cube_center = vec3(cube.position[0], cube.position[1], cube.position[2]); // Convertir a vec3
+    let distance = dot(plane_normal, cube_center) - d;
+
+    // Calcular radio efectivo del cubo
+    let effective_radius = 0.5 * (
+        Math.abs(cube.scale[0] * plane_normal[0]) + 
+        Math.abs(cube.scale[1] * plane_normal[1]) + 
+        Math.abs(cube.scale[2] * plane_normal[2])
+    );
+
+    // Verificar límites del plano (usar vec3 para las posiciones)
+    let planeBounds = calculatePlaneBounds(pointsPlane, plane.scale);
+    let withinPlaneBounds = (
+        cube_center[0] >= vec3(plane.position)[0] + planeBounds.minX &&
+        cube_center[0] <= vec3(plane.position)[0] + planeBounds.maxX &&
+        cube_center[1] >= vec3(plane.position)[1] + planeBounds.minY &&
+        cube_center[1] <= vec3(plane.position)[1] + planeBounds.maxY
+    );
+
+    return (Math.abs(distance) < effective_radius) && withinPlaneBounds;
+}
+
+//----------------------------------------------------------------------------
+// Funciones para el juego
+//----------------------------------------------------------------------------
 
 function reset_sphere_position(sphere) {
    if (entities.indexOf(sphere) === sphereControllerIndex) {
