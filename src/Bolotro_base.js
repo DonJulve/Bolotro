@@ -111,7 +111,6 @@ var entities = [
 		type: "cube",
 		position: [0.0, 0.0, 1.0],
 		rotation: [0.0, 0.0, 0.0],
-    scale: [1.0, 1.0, 2.0],
     velocity: [0.0, 0.0, 0.0],
     isFalling: false
 	}
@@ -324,7 +323,6 @@ function physics_update(dt) {
         } else if (entity.type === "cube" && entity.isFalling) {
             // Física para cubos en caída
             let airResistance = 0.99;  // Resistencia del aire
-            let rotationalForce = 0.5; // Fuerza rotacional
 
             // Aplicar gravedad al cubo
             entity.velocity[2] -= gravity_ac * dt;
@@ -340,17 +338,16 @@ function physics_update(dt) {
             entity.position[2] += entity.velocity[2] * dt;
 
             // Actualizar rotación del cubo
-            entity.rotation[0] += (entity.velocity[0] * rotationalForce) * dt;
-            entity.rotation[1] += (entity.velocity[1] * rotationalForce) * dt;
-            entity.rotation[2] += (entity.velocity[2] * rotationalForce) * dt;
+            let angularVelocity = 2.0;
+            entity.rotation[0] += (entity.velocity[0] * angularVelocity) * dt;
+            entity.rotation[1] += (entity.velocity[1] * angularVelocity) * dt;
+            entity.rotation[2] += (entity.velocity[0] + entity.velocity[1]) * 0.5 * angularVelocity * dt;
 
-            // Limitar rotación a 360 grados
-            entity.rotation = entity.rotation.map(angle => angle % 360);
         }
     });
 }
 
-function colisions_update(dt){
+function colisions_update(dt) {
     // Colisiones de esferas
     entities.forEach(function(entity, index) {
         if(entity.type !== "sphere") return;
@@ -375,6 +372,7 @@ function colisions_update(dt){
             let velocity = vec3(entity.velocity[0], entity.velocity[1], entity.velocity[2]);
             let dot_product = dot(velocity, plane_normal);
             
+            // Rebote con amortiguación
             entity.velocity[0] -= boundForce * dot_product * plane_normal[0];
             entity.velocity[1] -= boundForce * dot_product * plane_normal[1];
             entity.velocity[2] -= boundForce * dot_product * plane_normal[2];
@@ -397,7 +395,7 @@ function colisions_update(dt){
     entities.forEach(function(entity, index) {
         if(entity.type !== "cube" || !entity.isFalling) return;
 
-        // Colisión cubo-plano
+        // Colisión cubo-plano (versión mejorada)
         if(check_cube_plane_col(entity, entities[0])) {
             let plane_normal = getPlaneNormal(entities[0]);
             plane_normal = vec3(plane_normal[0], plane_normal[1], plane_normal[2]);
@@ -409,39 +407,93 @@ function colisions_update(dt){
             let d = dot(plane_normal, plane_point);
             let distance = dot(plane_normal, cube_center) - d;
 
-            // Calcular radio efectivo del cubo
+            // Calcular radio efectivo del cubo (considerando su orientación)
             let effective_radius = 0.5 * (
-                Math.abs(entity.scale[0] * plane_normal[0]) + 
-                Math.abs(entity.scale[1] * plane_normal[1]) + 
-                Math.abs(entity.scale[2] * plane_normal[2])
+                Math.abs(plane_normal[0]) + 
+                Math.abs(plane_normal[1]) + 
+                Math.abs(plane_normal[2])
             );
 
-            // Corregir posición
+            // Corregir posición para evitar hundimiento
             entity.position[0] -= plane_normal[0] * (distance - effective_radius);
             entity.position[1] -= plane_normal[1] * (distance - effective_radius);
             entity.position[2] -= plane_normal[2] * (distance - effective_radius);
 
-            // Calcular nueva velocidad
+            // Calcular velocidad de impacto
             let velocity = vec3(entity.velocity[0], entity.velocity[1], entity.velocity[2]);
-            let dot_product = dot(velocity, plane_normal);
-            
-            // Rebote con amortiguación
-            entity.velocity[0] -= 1.5 * dot_product * plane_normal[0];
-            entity.velocity[1] -= 1.5 * dot_product * plane_normal[1];
-            entity.velocity[2] -= 1.5 * dot_product * plane_normal[2];
+            let impactSpeed = dot(velocity, plane_normal);
 
-            // Amortiguación adicional
-            entity.velocity[0] *= 0.6;
-            entity.velocity[1] *= 0.6;
-            entity.velocity[2] *= 0.6;
+            // Solo aplicar rebote si está cayendo con suficiente velocidad
+            if(impactSpeed < -0.2) {
+                let restitution = 0.6; // Coeficiente de rebote (0-1)
+                
+                // Aplicar rebote
+                entity.velocity[0] -= (1 + restitution) * impactSpeed * plane_normal[0];
+                entity.velocity[1] -= (1 + restitution) * impactSpeed * plane_normal[1];
+                entity.velocity[2] -= (1 + restitution) * impactSpeed * plane_normal[2];
+                
+                // Amortiguamiento y fricción
+                let damping = 0.7;
+                entity.velocity[0] *= damping;
+                entity.velocity[1] *= damping;
+                entity.velocity[2] *= damping;
+                
+                // Añadir rotación por impacto
+                let spinFactor = 5.0;
+                entity.rotation[0] += entity.velocity[1] * spinFactor;
+                entity.rotation[1] += entity.velocity[0] * spinFactor;
+            }
 
-            // Detener caída si la velocidad es muy baja
-            if(length(vec3(entity.velocity[0], entity.velocity[1], entity.velocity[2])) < 0.5) {
+            // Detener el cubo si la energía es baja
+            if(length(velocity) < 0.5 && Math.abs(entity.velocity[2]) < 0.1) {
                 entity.isFalling = false;
                 entity.velocity = [0, 0, 0];
+                
+                // Alinear ligeramente con el plano al detenerse
+                entity.rotation[0] = Math.round(entity.rotation[0] / 90) * 90;
+                entity.rotation[1] = Math.round(entity.rotation[1] / 90) * 90;
+                entity.rotation[2] = Math.round(entity.rotation[2] / 90) * 90;
+            }
+        }
+        
+        // Colisión cubo-cubo (opcional)
+        for(let i = index + 1; i < entities.length; i++) {
+            if(entities[i].type === "cube" && entities[i].isFalling) {
+                if(check_cube_cube_col(entity, entities[i])) {
+                    handle_cube_cube_collision(entity, entities[i]);
+                }
             }
         }
     });
+}
+
+// Función auxiliar para colisión cubo-cubo (opcional)
+function check_cube_cube_col(cube1, cube2) {
+    let size = 0.5; // Mitad del tamaño del cubo (1x1x1)
+    
+    return (Math.abs(cube1.position[0] - cube2.position[0]) < size * 2 &&
+            Math.abs(cube1.position[1] - cube2.position[1]) < size * 2 &&
+            Math.abs(cube1.position[2] - cube2.position[2]) < size * 2);
+}
+
+// Función auxiliar para manejar colisión cubo-cubo (opcional)
+function handle_cube_cube_collision(cube1, cube2) {
+    let direction = normalize(vec3(
+        cube2.position[0] - cube1.position[0],
+        cube2.position[1] - cube1.position[1],
+        cube2.position[2] - cube1.position[2]
+    ));
+    
+    let force = 0.3;
+    
+    // Aplicar fuerzas opuestas a ambos cubos
+    cube1.velocity[0] -= direction[0] * force;
+    cube1.velocity[1] -= direction[1] * force;
+    cube1.velocity[2] -= direction[2] * force;
+    
+    cube2.velocity[0] += direction[0] * force;
+    cube2.velocity[1] += direction[1] * force;
+    cube2.velocity[2] += direction[2] * force;
 }
 //----------------------------------------------------------------------------
 // Colisiones entre esferas y planos
@@ -524,18 +576,15 @@ function getPlaneNormal(plane) {
 //----------------------------------------------------------------------------
 
 function check_sphere_cube_col(sphere, cube) {
-    // Calcular la mitad de las dimensiones del cubo
-    let halfX = cube.scale[0] / 2;
-    let halfY = cube.scale[1] / 2;
-    let halfZ = cube.scale[2] / 2;
+    let halfsize = 0.5;
 
     // Calcular los límites del cubo en el mundo
-    let cubeMinX = cube.position[0] - halfX;
-    let cubeMaxX = cube.position[0] + halfX;
-    let cubeMinY = cube.position[1] - halfY;
-    let cubeMaxY = cube.position[1] + halfY;
-    let cubeMinZ = cube.position[2] - halfZ;
-    let cubeMaxZ = cube.position[2] + halfZ;
+    let cubeMinX = cube.position[0] - halfsize;
+    let cubeMaxX = cube.position[0] + halfsize;
+    let cubeMinY = cube.position[1] - halfsize;
+    let cubeMaxY = cube.position[1] + halfsize;
+    let cubeMinZ = cube.position[2] - halfsize;
+    let cubeMaxZ = cube.position[2] + halfsize;
 
     // Encontrar el punto más cercano en el cubo a la esfera
     let closestX = Math.max(cubeMinX, Math.min(sphere.position[0], cubeMaxX));
@@ -554,72 +603,33 @@ function check_sphere_cube_col(sphere, cube) {
 }
 
 function handle_sphere_cube_collision(sphere, cube) {
-    // Calcular el punto más cercano en el cubo
-    let halfX = cube.scale[0] / 2;
-    let halfY = cube.scale[1] / 2;
-    let halfZ = cube.scale[2] / 2;
-
-    let cubeMinX = cube.position[0] - halfX;
-    let cubeMaxX = cube.position[0] + halfX;
-    let cubeMinY = cube.position[1] - halfY;
-    let cubeMaxY = cube.position[1] + halfY;
-    let cubeMinZ = cube.position[2] - halfZ;
-    let cubeMaxZ = cube.position[2] + halfZ;
-
-    let closestX = Math.max(cubeMinX, Math.min(sphere.position[0], cubeMaxX));
-    let closestY = Math.max(cubeMinY, Math.min(sphere.position[1], cubeMaxY));
-    let closestZ = Math.max(cubeMinZ, Math.min(sphere.position[2], cubeMaxZ));
-
-    let dx = sphere.position[0] - closestX;
-    let dy = sphere.position[1] - closestY;
-    let dz = sphere.position[2] - closestZ;
-
-    // Calcular la normal de la colisión
-    let normal = normalize(vec3(dx, dy, dz));
-    let penetration = (sphere.radius * 0.5) - Math.sqrt(dx*dx + dy*dy + dz*dz);
-
-    // Corregir posición de la esfera
-    sphere.position[0] += normal[0] * penetration;
-    sphere.position[1] += normal[1] * penetration;
-    sphere.position[2] += normal[2] * penetration;
-
-    // Reflejar la velocidad
-    let velocity = vec3(sphere.velocity[0], sphere.velocity[1], sphere.velocity[2]);
-    let dotProd = dot(velocity, normal);
-    sphere.velocity[0] -= 2 * dotProd * normal[0];
-    sphere.velocity[1] -= 2 * dotProd * normal[1];
-    sphere.velocity[2] -= 2 * dotProd * normal[2];
-
-    // Aplicar amortiguación
-    sphere.velocity[0] *= 0.8;
-    sphere.velocity[1] *= 0.8;
-    sphere.velocity[2] *= 0.8;
-
-    // Aplicar fuerza al cubo
-    let impactForce = 0.5; // Ajustar según sea necesario
-    cube.isFalling = true;
-    
-    // Calcular dirección de la fuerza
-    let forceDirection = normalize(vec3(
-        sphere.position[0] - cube.position[0],
-        sphere.position[1] - cube.position[1],
-        sphere.position[2] - cube.position[2]
-    ));
-    
-    // Aplicar velocidad inicial al cubo
-    cube.velocity = [
-        forceDirection[0] * impactForce * 2,
-        forceDirection[1] * impactForce * 2,
-        forceDirection[2] * impactForce + 3.0,
-    ];
-    
-    // Añadir rotación de caída
-    let rotationAmount = 30; // Grados
-    cube.rotation = [
-        rotationAmount * forceDirection[1],
-        rotationAmount * forceDirection[0],
-        0
-    ];
+    if (!cube.isFalling) {
+        cube.isFalling = true;
+        
+        // Dirección del impacto (de la esfera al cubo)
+        let direction = normalize(vec3(
+            cube.position[0] - sphere.position[0],
+            cube.position[1] - sphere.position[1],
+            cube.position[2] - sphere.position[2]
+        ));
+        
+        // Magnitud basada en la velocidad de la esfera
+        let impactStrength = length(vec3(sphere.velocity[0], sphere.velocity[1], sphere.velocity[2])) * 0.3;
+        
+        // Aplicar fuerza de impacto
+        cube.velocity = [
+            direction[0] * impactStrength,
+            direction[1] * impactStrength,
+            Math.abs(direction[2]) * impactStrength + 2.0  // Siempre hacia arriba
+        ];
+        
+        // Rotación inicial basada en la dirección del impacto
+        cube.rotation = [
+            direction[1] * 30,
+            direction[0] * 30,
+            (direction[0] + direction[1]) * 15
+        ];
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -639,9 +649,9 @@ function check_cube_plane_col(cube, plane) {
 
     // Calcular radio efectivo del cubo
     let effective_radius = 0.5 * (
-        Math.abs(cube.scale[0] * plane_normal[0]) + 
-        Math.abs(cube.scale[1] * plane_normal[1]) + 
-        Math.abs(cube.scale[2] * plane_normal[2])
+        Math.abs(plane_normal[0]) + 
+        Math.abs(plane_normal[1]) + 
+        Math.abs(plane_normal[2])
     );
 
     // Verificar límites del plano (usar vec3 para las posiciones)
