@@ -711,6 +711,18 @@ function reset_sphere_position(sphere) {
     } 
 }
 
+function reset_cube_position() {
+    let cube = entities[2]; // Asumiendo que el cubo está en el índice 2
+    cube.position = [0.0, 0.0, 1.0];
+    cube.rotation = [0.0, 0.0, 0.0];
+    cube.velocity = [0.0, 0.0, 0.0];
+    cube.isFalling = false;
+    
+    // También actualizamos su matriz de transformación
+    let transform = translate(cube.position[0], cube.position[1], cube.position[2]);
+    objectsToDraw[2].uniforms.u_model = transform;
+}
+
 //Derecha true obviamente 
 function moverHorizontal(direccion){
 	//Miramos que no se salga de los limites
@@ -785,9 +797,11 @@ window.addEventListener("keydown", function (event) {
 			break;
     case "r":
       reset_sphere_position(entities[sphereControllerIndex]);
+      reset_cube_position();
       break;
     case "R":
       reset_sphere_position(entities[sphereControllerIndex]);
+      reset_cube_position();
       break;
 		case " ":
       if(!hasShoot){
