@@ -380,7 +380,7 @@ function colisions_update(dt) {
 
         // Colisión esfera-cubo
         for (let i = index + 1; i < entities.length; i++) {
-            if (entities[i].type === "cube" && check_sphere_cube_col(entity, entities[i])) {
+            if (entities[i].type === "cube" && !entities[i].isFalling && check_sphere_cube_col(entity, entities[i])) {
                 handle_sphere_cube_collision(entity, entities[i]);
             }
         }
@@ -442,17 +442,6 @@ function colisions_update(dt) {
                 let spinFactor = 5.0;
                 entity.rotation[0] += entity.velocity[1] * spinFactor;
                 entity.rotation[1] += entity.velocity[0] * spinFactor;
-            }
-
-            // Detener el cubo si la energía es baja
-            if(length(velocity) < 0.5 && Math.abs(entity.velocity[2]) < 0.1) {
-                entity.isFalling = false;
-                entity.velocity = [0, 0, 0];
-                
-                // Alinear ligeramente con el plano al detenerse
-                entity.rotation[0] = Math.round(entity.rotation[0] / 90) * 90;
-                entity.rotation[1] = Math.round(entity.rotation[1] / 90) * 90;
-                entity.rotation[2] = Math.round(entity.rotation[2] / 90) * 90;
             }
         }
         
@@ -613,14 +602,17 @@ function handle_sphere_cube_collision(sphere, cube) {
             cube.position[2] - sphere.position[2]
         ));
         
-        // Magnitud basada en la velocidad de la esfera
-        let impactStrength = length(vec3(sphere.velocity[0], sphere.velocity[1], sphere.velocity[2])) * 0.3;
+        // Magnitud basada en la velocidad de la esfera, con un mínimo garantizado
+        let sphereSpeed = length(vec3(sphere.velocity[0], sphere.velocity[1], sphere.velocity[2]));
+        let minImpactStrength = 3.0; // Fuerza mínima de impacto
+        let maxImpactStrength = 8.0;  // Fuerza máxima (ajusta este valor según necesites)
+        let impactStrength = Math.min(Math.max(sphereSpeed * 0.3, minImpactStrength), maxImpactStrength);
         
-        // Aplicar fuerza de impacto
+        // Aplicar fuerza de impacto con un mínimo hacia arriba
         cube.velocity = [
             direction[0] * impactStrength,
             direction[1] * impactStrength,
-            Math.abs(direction[2]) * impactStrength + 2.0  // Siempre hacia arriba
+            Math.max(Math.abs(direction[2]) * impactStrength, 2.5)  // Mínimo de 2.5 hacia arriba
         ];
         
         // Rotación inicial basada en la dirección del impacto
@@ -638,32 +630,52 @@ function handle_sphere_cube_collision(sphere, cube) {
 
 function check_cube_plane_col(cube, plane) {
     let plane_normal = getPlaneNormal(plane);
-    plane_normal = vec3(plane_normal[0], plane_normal[1], plane_normal[2]); // Asegurar tipo vec3
+    plane_normal = vec3(plane_normal[0], plane_normal[1], plane_normal[2]);
     plane_normal = normalize(plane_normal);
 
-    let plane_point = vec3(plane.position[0], plane.position[1], plane.position[2]); // Convertir a vec3
+    let plane_point = vec3(plane.position[0], plane.position[1], plane.position[2]);
     let d = dot(plane_normal, plane_point);
 
-    let cube_center = vec3(cube.position[0], cube.position[1], cube.position[2]); // Convertir a vec3
-    let distance = dot(plane_normal, cube_center) - d;
+    // Calcular los 8 vértices del cubo (considerando su rotación)
+    let halfsize = 0.5;
+    let vertices = [
+        vec3(-halfsize, -halfsize, -halfsize),
+        vec3(-halfsize, -halfsize, halfsize),
+        vec3(-halfsize, halfsize, -halfsize),
+        vec3(-halfsize, halfsize, halfsize),
+        vec3(halfsize, -halfsize, -halfsize),
+        vec3(halfsize, -halfsize, halfsize),
+        vec3(halfsize, halfsize, -halfsize),
+        vec3(halfsize, halfsize, halfsize)
+    ];
 
-    // Calcular radio efectivo del cubo
-    let effective_radius = 0.5 * (
-        Math.abs(plane_normal[0]) + 
-        Math.abs(plane_normal[1]) + 
-        Math.abs(plane_normal[2])
-    );
+    // Transformar vértices según la posición y rotación del cubo
+    let transform = mat4();
+    transform = mult(transform, translate(cube.position[0], cube.position[1], cube.position[2]));
+    transform = mult(transform, rotate(cube.rotation[0], vec3(1, 0, 0)));
+    transform = mult(transform, rotate(cube.rotation[1], vec3(0, 1, 0)));
+    transform = mult(transform, rotate(cube.rotation[2], vec3(0, 0, 1)));
 
-    // Verificar límites del plano (usar vec3 para las posiciones)
-    let planeBounds = calculatePlaneBounds(pointsPlane, plane.scale);
-    let withinPlaneBounds = (
-        cube_center[0] >= vec3(plane.position)[0] + planeBounds.minX &&
-        cube_center[0] <= vec3(plane.position)[0] + planeBounds.maxX &&
-        cube_center[1] >= vec3(plane.position)[1] + planeBounds.minY &&
-        cube_center[1] <= vec3(plane.position)[1] + planeBounds.maxY
-    );
+    let worldVertices = vertices.map(v => {
+        let v4 = mult(transform, vec4(v[0], v[1], v[2], 1));
+        return vec3(v4[0], v4[1], v4[2]);
+    });
 
-    return (Math.abs(distance) < effective_radius) && withinPlaneBounds;
+    // Verificar colisión para cada vértice con margen predictivo
+    for (let vertex of worldVertices) {
+        // Calcular posición futura basada en velocidad
+        let futureVertex = add(vertex, vec3(cube.velocity[0]*0.1, cube.velocity[1]*0.1, cube.velocity[2]*0.1));
+        
+        let currentDistance = dot(plane_normal, vertex) - d;
+        let futureDistance = dot(plane_normal, futureVertex) - d;
+        
+        // Si está penetrando o va a penetrar en el próximo frame
+        if (currentDistance < 0.1 || (currentDistance > 0 && futureDistance < 0)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 //----------------------------------------------------------------------------
