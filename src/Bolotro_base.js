@@ -82,7 +82,27 @@ var objectsToDraw = [
 		},
 		primType: "triangles",
 	},
+
+    //--------------------Bolos
 	{
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+    {
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+    {
 		programInfo: cubePorgramInfo,
 		pointsArray: pointsCube, 
 		uniforms: {
@@ -107,12 +127,31 @@ var entities = [
 		radius: 1.5,
 		velocity: [0.0, 0.0, 0.0]
 	},
+
+    //--------------------Bolos
 	{
 		type: "cube",
+        origPosition: [0.0, 0.0, 1.0],
 		position: [0.0, 0.0, 1.0],
 		rotation: [0.0, 0.0, 0.0],
-    velocity: [0.0, 0.0, 0.0],
-    isFalling: false
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+	{
+		type: "cube",
+		origPosition: [0.0, 4.0, 1.0],
+        position: [0.0, 4.0, 1.0],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+	{
+		type: "cube",
+		origPosition: [0.0, -4.0, 1.0],
+        position: [0.0, -4.0, 1.0],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
 	}
 ]
 
@@ -270,7 +309,7 @@ function update(dt) {
 			
 			objectsToDraw[index].uniforms.u_model = transform;
 		}
-    else if(entity.type === "cube") {
+        else if(entity.type === "cube") {
             // Rotación dinámica durante la caída
             if(entity.isFalling) {
                 // Actualizar rotación basada en la velocidad
@@ -279,17 +318,19 @@ function update(dt) {
                 entity.rotation[2] += entity.velocity[2] * 0.2 * dt * 180/Math.PI;
             }
 
+
             // Construir matriz de transformación
-            let transform = translate(entity.position[0], entity.position[1], entity.position[2]);
+            //let transform = translate(entity.position[0], entity.position[1], entity.position[2]);
             
             let ejeX = vec3(1.0, 0.0, 0.0);
-			      transform = mult(rotate(entity.rotation[0], ejeX), transform);
-			      let ejeY = vec3(0.0, 1.0, 0.0);
-			      transform = mult(rotate(entity.rotation[1], ejeY), transform);
-			      let ejeZ = vec3(0.0, 0.0,1.0);
-			      transform = mult(rotate(entity.rotation[2], ejeZ), transform);
-			      transform = mult(translate(entity.position[0], entity.position[1], entity.position[2]), transform);
-            
+			//transform = mult(rotate(entity.rotation[0], ejeX), transform);
+            let transform = rotate(entity.rotation[0], ejeX);
+			let ejeY = vec3(0.0, 1.0, 0.0);
+			transform = mult(rotate(entity.rotation[1], ejeY), transform);
+			let ejeZ = vec3(0.0, 0.0,1.0);
+			transform = mult(rotate(entity.rotation[2], ejeZ), transform);
+			transform = mult(translate(entity.position[0], entity.position[1], entity.position[2]), transform);
+        
             objectsToDraw[index].uniforms.u_model = transform;
         }
 	});
@@ -712,15 +753,19 @@ function reset_sphere_position(sphere) {
 }
 
 function reset_cube_position() {
-    let cube = entities[2]; // Asumiendo que el cubo está en el índice 2
-    cube.position = [0.0, 0.0, 1.0];
-    cube.rotation = [0.0, 0.0, 0.0];
-    cube.velocity = [0.0, 0.0, 0.0];
-    cube.isFalling = false;
+    entities.forEach(function(entity, index) {
+        if (entity.type==="cube") {
+            entity.position = [entity.origPosition[0], entity.origPosition[1], entity.origPosition[2]];
+            entity.rotation = [0.0, 0.0, 0.0];
+            entity.velocity = [0.0, 0.0, 0.0];
+            entity.isFalling = false;
+
+            // También actualizamos su matriz de transformación
+            let transform = translate(entity.position[0], entity.position[1], entity.position[2]);
+            objectsToDraw[index].uniforms.u_model = transform;
+        }
+    })
     
-    // También actualizamos su matriz de transformación
-    let transform = translate(cube.position[0], cube.position[1], cube.position[2]);
-    objectsToDraw[2].uniforms.u_model = transform;
 }
 
 //Derecha true obviamente 
