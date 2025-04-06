@@ -110,15 +110,79 @@ var objectsToDraw = [
 			u_model: new mat4(),
 		},
 		primType: "triangles",
+	},
+    {
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+    {
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+    {
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+    {
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+    {
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+    {
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
+	},
+    {
+		programInfo: cubePorgramInfo,
+		pointsArray: pointsCube, 
+		uniforms: {
+			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_model: new mat4(),
+		},
+		primType: "triangles",
 	}
 ];
 
+//List of physical objects
 var entities = [
 	{
 		type: "plane",
 		position: [0.0, 0.0, 0.0],
 		rotation: [0.0, 0.0, 0.0],
-		scale: [1.0, 1.0, 1.0]
+		scale: [1.0, 0.6, 1.0]
 	},
 	{
 		type: "sphere",
@@ -131,24 +195,80 @@ var entities = [
     //--------------------Bolos
 	{
 		type: "cube",
-        origPosition: [0.0, 0.0, 1.0],
-		position: [0.0, 0.0, 1.0],
+        origPosition: [-6.0, -3.0, 1.0],
+		position: [],
 		rotation: [0.0, 0.0, 0.0],
         velocity: [0.0, 0.0, 0.0],
         isFalling: false
 	},
 	{
 		type: "cube",
-		origPosition: [0.0, 4.0, 1.0],
-        position: [0.0, 4.0, 1.0],
+		origPosition: [-6.0, -1.0, 1.0],
+        position: [],
 		rotation: [0.0, 0.0, 0.0],
         velocity: [0.0, 0.0, 0.0],
         isFalling: false
 	},
 	{
 		type: "cube",
-		origPosition: [0.0, -4.0, 1.0],
-        position: [0.0, -4.0, 1.0],
+		origPosition: [-6.0, 1.0, 1.0],
+        position: [],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+    {
+		type: "cube",
+        origPosition: [-6.0, 3.0, 1.0],
+		position: [],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+	{
+		type: "cube",
+		origPosition: [-5.0, -2.0, 1.0],
+        position: [],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+	{
+		type: "cube",
+		origPosition: [-5.0, 0.0, 1.0],
+        position: [],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+    {
+		type: "cube",
+        origPosition: [-5.0, 2.0, 1.0],
+		position: [],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+	{
+		type: "cube",
+		origPosition: [-4.0, -1.0, 1.0],
+        position: [],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+	{
+		type: "cube",
+		origPosition: [-4.0, 1.0, 1.0],
+        position: [],
+		rotation: [0.0, 0.0, 0.0],
+        velocity: [0.0, 0.0, 0.0],
+        isFalling: false
+	},
+    {
+		type: "cube",
+		origPosition: [-3.0, 0.0, 1.0],
+        position: [],
 		rotation: [0.0, 0.0, 0.0],
         velocity: [0.0, 0.0, 0.0],
         isFalling: false
@@ -214,16 +334,24 @@ window.onload = function init() {
 	up = vec3(0.0, 0.0, 1.0);
 	view = lookAt(eye,target,up);
 
-	entities[1].position = subtract(eye, vecPosInicial);
+    entities[1].position = subtract(eye, vecPosInicial);
 	entities[1].orientation = mat4();
 
-  // Inicializar valores de cámara
-  eye = initialEye;
-  target = initialTarget;
-  up = initialUp;
-  vecTarget = initialVecTarget;
-  vecPosInicial = initialVecPosInicial;
-  rotationAngle = initialRotationAngle;
+    // Inicializar valores de cámara
+    eye = initialEye;
+    target = initialTarget;
+    up = initialUp;
+    vecTarget = initialVecTarget;
+    vecPosInicial = initialVecPosInicial;
+    rotationAngle = initialRotationAngle;
+
+    //Colocar cada bolo en su sitio
+    entities.forEach(function(entity, index) {
+        if (entity.type==="cube") {
+            entity.position = [entity.origPosition[0], entity.origPosition[1], entity.origPosition[2]];
+            updateTransformMatrix(entity, index);
+        }
+    });
 	
 
 	lastTick = Date.now();
@@ -318,22 +446,24 @@ function update(dt) {
                 entity.rotation[2] += entity.velocity[2] * 0.2 * dt * 180/Math.PI;
             }
 
-
             // Construir matriz de transformación
-            //let transform = translate(entity.position[0], entity.position[1], entity.position[2]);
-            
-            let ejeX = vec3(1.0, 0.0, 0.0);
-			//transform = mult(rotate(entity.rotation[0], ejeX), transform);
-            let transform = rotate(entity.rotation[0], ejeX);
-			let ejeY = vec3(0.0, 1.0, 0.0);
-			transform = mult(rotate(entity.rotation[1], ejeY), transform);
-			let ejeZ = vec3(0.0, 0.0,1.0);
-			transform = mult(rotate(entity.rotation[2], ejeZ), transform);
-			transform = mult(translate(entity.position[0], entity.position[1], entity.position[2]), transform);
-        
-            objectsToDraw[index].uniforms.u_model = transform;
+            updateTransformMatrix(entity,index);
+
         }
 	});
+}
+
+//Actualizar la matriz de transformación de una entidad (actualizar gráficos con respecto a la posición lógica)
+function updateTransformMatrix(entity, index) {
+    let ejeX = vec3(1.0, 0.0, 0.0);
+    let transform = rotate(entity.rotation[0], ejeX);
+    let ejeY = vec3(0.0, 1.0, 0.0);
+    transform = mult(rotate(entity.rotation[1], ejeY), transform);
+    let ejeZ = vec3(0.0, 0.0,1.0);
+    transform = mult(rotate(entity.rotation[2], ejeZ), transform);
+    transform = mult(translate(entity.position[0], entity.position[1], entity.position[2]), transform);
+
+    objectsToDraw[index].uniforms.u_model = transform;
 }
 
 function physics_update(dt) {
