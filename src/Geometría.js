@@ -1997,13 +1997,13 @@ for (let i=0; i < cubeIndices.length; i++)
 	pointsCube.push(cubeVerts[cubeIndices[i]]);
 }
 
-const pointsSphere = [];
+export const pointsSphere = [];
 for (let i=0; i < sphereIndices.length; i++)
 {
 	pointsSphere.push(sphereVerts[sphereIndices[i]]);
 }
 
-const pointsPlane = [];
+export const pointsPlane = [];
 pointsPlane.push([-10.0, -10.0, 0.0, 1.0]);
 pointsPlane.push([ 10.0, -10.0, 0.0, 1.0]);
 pointsPlane.push([-10.0,  10.0, 0.0, 1.0]);

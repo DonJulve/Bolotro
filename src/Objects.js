@@ -1,3 +1,5 @@
+import { pointsSphere } from "./Geometría.js";
+
 export class BowlingBall {
 
     constructor() {

@@ -1,4 +1,4 @@
-import {vec3} from "../Common/MVnew"
+import {vec3} from "../Common/MVnew.js"
 
 export class Camera {
     static instance;

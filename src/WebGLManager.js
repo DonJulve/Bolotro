@@ -10,50 +10,59 @@ export class WebGLManager {
      * Configura las opciones y estados básicos de WebGL.
      */
     #setupGL() {
-		const gl = this.gl;
-		gl.clearColor(0.0, 0.0, 0.0, 1.0); // fondo negro
-		gl.enable(gl.DEPTH_TEST);
-		gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-	}
+		    const gl = this.gl;
+		    gl.clearColor(0.0, 0.0, 0.0, 1.0); // fondo negro
+		    gl.enable(gl.DEPTH_TEST);
+		    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+	  }
 
     /**
      * Establece la matriz de proyección para la cámara.
      */
-    #setProjection(fov) {
-		const gl = this.gl;
-		const aspect = this.canvas.width / this.canvas.height;
-
-		const projection = perspective(fov, aspect, 0.1, 100.0);
-		gl.uniformMatrix4fv(this.programInfo.uniformLocations.projection, false, projection);
-	}
+    #setProjection(pInfo, fov) {
+        const gl = this.gl;
+        const aspect = this.canvas.width / this.canvas.height;
+        this.projectionMatrix = perspective(fov, aspect, 0.1, 100.0);
+        
+        // Actualiza el uniform en el programa específico
+        if (pInfo && pInfo.uniformLocations) {
+            gl.uniformMatrix4fv(
+                pInfo.uniformLocations.projection, 
+                false, 
+                this.projectionMatrix
+            );
+        }
+    }
 
 
     #render() {
-        this.scene.update(dt);
-
         const gl = this.gl;
-		gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
-        objects = this.scene.getObjects();
-        for (object in objects) {
+        this.objectsToDraw.forEach(object => {
             gl.useProgram(object.programInfo.program);
+            
+            // Actualizar matrices y uniforms
+            this.#setUniforms(object.programInfo, {
+                u_model: object.uniforms.u_model,
+                u_color: object.uniforms.u_color,
+                view: this.viewMatrix,
+                projection: this.projectionMatrix
+            });
 
-            // Setup buffers and attributes
-            setBuffersAndAttributes(object.programInfo, object);
+            // Configurar buffers
+            this.#setBuffersAndAttributes(object.programInfo, object);
+            
+            gl.drawArrays(object.primitive, 0, object.pointsArray.length);
+        });
 
-            // Set the uniforms
-		    setUniforms(object.programInfo, object.uniforms);
-
-            // Draw
-		    gl.drawArrays(object.primitive, 0, object.pointsArray.length);
-        }
-		requestAnimationFrame(this.#render);
+        requestAnimationFrame(() => this.#render());
     }
 
     // -----------------
     // UTILS
     // -----------------
-    setBuffersAndAttributes(pInfo, object) {
+    #setBuffersAndAttributes(pInfo, object) {
         const gl = this.gl;
         // Load the data into GPU data buffers
         // Vertices
@@ -64,26 +73,27 @@ export class WebGLManager {
         gl.enableVertexAttribArray( pInfo.attribLocations.vPosition );
     }
 
-    setUniforms(pInfo, uniforms) {
-        const gl = this.gl;
-        var canvas = document.getElementById("gl-canvas");
+    #setUniforms(pInfo, uniforms) {
+    const gl = this.gl;
     
-        // Set up camera
-        // Projection matrix
-        projection = perspective( 45.0, canvas.width/canvas.height, 0.1, 100.0 );
-        gl.uniformMatrix4fv( pInfo.uniformLocations.projection, gl.FALSE, projection ); // copy projection to uniform value in shader
+        // Matrices
+        gl.uniformMatrix4fv(pInfo.uniformLocations.projection, false, uniforms.projection);
+        gl.uniformMatrix4fv(pInfo.uniformLocations.view, false, uniforms.view);
+        gl.uniformMatrix4fv(pInfo.uniformLocations.model, false, uniforms.u_model);
     
-        
-        gl.uniformMatrix4fv(pInfo.uniformLocations.view, gl.FALSE, view); // copy view to uniform value in shader
-    
-        // Copy uniform model values to corresponding values in shaders
-        if (pInfo.uniformLocations.baseColor != null) {
-            gl.uniform4f(pInfo.uniformLocations.baseColor, uniforms.u_color[0], uniforms.u_color[1], uniforms.u_color[2], uniforms.u_color[3]);
+        if (pInfo.uniformLocations.baseColor && uniforms.u_color) {
+            gl.uniform4f(
+                pInfo.uniformLocations.baseColor,
+                uniforms.u_color[0],
+                uniforms.u_color[1],
+                uniforms.u_color[2],
+                uniforms.u_color[3]
+            );
         }
-        gl.uniformMatrix4fv(pInfo.uniformLocations.model, gl.FALSE, uniforms.u_model);
     }
 
-	// ----------------------------
+
+	  // ----------------------------
     // Funciones Publicas
     // ----------------------------
     static instance;
@@ -99,6 +109,9 @@ export class WebGLManager {
         }
 
         this.scene = new SceneManager();
+        this.viewMatrix = mat4();
+        this.projectionMatrix = mat4();
+        
 
         WebGLManager.instance = this;
     }
@@ -106,8 +119,8 @@ export class WebGLManager {
     /**
      * Inicializa el contexto y configura WebGL.
      */
-    init(scene, fov) {
-		this.scene = scene;
+    init(objectsToDraw, fov) {
+    this.objectsToDraw = objectsToDraw;
 		this.#setupGL();
 		this.#setProjection(fov);
 
@@ -118,62 +131,49 @@ export class WebGLManager {
 		requestAnimFrame(() => this.#render());
 	}
 
+    updateViewMatrix(eye, target, up) {
+        this.viewMatrix = lookAt(eye, target, up);
+    }
+
     getProgramInfoTemplate(type) {
-        const gl = this.gl
-        if (type === "PLANE") {
-            var planeProgramInfo = {
-                program: {},
-                uniformLocations: {},
-                attribLocations: {},
-            };
-            // Set up a WebGL program for the plane
-            // Load shaders and initialize attribute buffers
-            planeProgramInfo.program = initShaders(gl, "plane-vertex-shader", "plane-fragment-shader");
-            
-            // Save the attribute and uniform locations
-            planeProgramInfo.uniformLocations.model = gl.getUniformLocation(planeProgramInfo.program, "model");
-            planeProgramInfo.uniformLocations.view = gl.getUniformLocation(planeProgramInfo.program, "view");
-            planeProgramInfo.uniformLocations.projection = gl.getUniformLocation(planeProgramInfo.program, "projection");
-            planeProgramInfo.uniformLocations.baseColor = gl.getUniformLocation(planeProgramInfo.program, "baseColor");
-            planeProgramInfo.attribLocations.vPosition = gl.getAttribLocation(planeProgramInfo.program, "vPosition");
+        const gl = this.gl;
+        const programInfo = {
+            program: null,
+            uniformLocations: {},
+            attribLocations: {}
+        };
 
-            return planeProgramInfo;
+        let vertexShader, fragmentShader;
+        
+        switch(type) {
+            case "PLANE":
+                vertexShader = "plane-vertex-shader";
+                fragmentShader = "plane-fragment-shader";
+                break;
+            case "SPHERE":
+                vertexShader = "sphere-vertex-shader";
+                fragmentShader = "sphere-fragment-shader";
+                break;
+            case "CUBE":
+                vertexShader = "plane-vertex-shader";
+                fragmentShader = "plane-fragment-shader";
+                break;
+            default:
+                throw new Error("Tipo de programa no soportado");
         }
-        else if (type === "CUBE") {
-            var cubePorgramInfo = {
-                program: {},
-                uniformLocations: {},
-                attribLocations: {},
-            };
 
-            //Save the attribute and uniform locations for the cube program
-            cubePorgramInfo.program = initShaders(gl, "plane-vertex-shader", "plane-fragment-shader");
-            cubePorgramInfo.uniformLocations.model = gl.getUniformLocation(cubePorgramInfo.program, "model");
-            cubePorgramInfo.uniformLocations.view = gl.getUniformLocation(cubePorgramInfo.program, "view");
-            cubePorgramInfo.uniformLocations.projection = gl.getUniformLocation(cubePorgramInfo.program, "projection");
-            cubePorgramInfo.uniformLocations.baseColor = gl.getUniformLocation(cubePorgramInfo.program, "baseColor");
-            cubePorgramInfo.attribLocations.vPosition = gl.getAttribLocation(cubePorgramInfo.program, "vPosition");
+        programInfo.program = initShaders(gl, vertexShader, fragmentShader);
+        
+        // Obtener ubicaciones de uniforms
+        programInfo.uniformLocations.model = gl.getUniformLocation(programInfo.program, "model");
+        programInfo.uniformLocations.view = gl.getUniformLocation(programInfo.program, "view");
+        programInfo.uniformLocations.projection = gl.getUniformLocation(programInfo.program, "projection");
+        programInfo.uniformLocations.baseColor = gl.getUniformLocation(programInfo.program, "baseColor");
+        
+        // Obtener ubicaciones de atributos
+        programInfo.attribLocations.vPosition = gl.getAttribLocation(programInfo.program, "vPosition");
 
-            return cubePorgramInfo;
-        }
-        else if (type === "SPHERE") {
-            var sphereProgramInfo = {
-                program: {},
-                uniformLocations: {},
-                attribLocations: {},
-            };
-
-            // Set up a WebGL program for spheres
-            // Load shaders and initialize attribute buffers
-            sphereProgramInfo.program = initShaders(gl, "sphere-vertex-shader", "sphere-fragment-shader");
-            
-            // Save the attribute and uniform locations
-            sphereProgramInfo.uniformLocations.model = gl.getUniformLocation(sphereProgramInfo.program, "model");
-            sphereProgramInfo.uniformLocations.view = gl.getUniformLocation(sphereProgramInfo.program, "view");
-            sphereProgramInfo.uniformLocations.projection = gl.getUniformLocation(sphereProgramInfo.program, "projection");
-            sphereProgramInfo.uniformLocations.baseColor = gl.getUniformLocation(sphereProgramInfo.program, "baseColor");
-            sphereProgramInfo.attribLocations.vPosition = gl.getAttribLocation(sphereProgramInfo.program, "vPosition");
-
-        }
+        return programInfo;
     }
 }
+

@@ -45,7 +45,7 @@ export class SceneManager {
     }
 
 
-    getObjects() {
+    getObjectsToDraw() {
         return this.objects
     }
   }
