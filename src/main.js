@@ -10,6 +10,6 @@ window.onload = function init() {
     inputManager.start();
     sceneManager.setupScene();
     
-    webgl.init(sceneManager.getObjectsToDraw(), 45.0);
+    webgl.init(45.0);
     webgl.start();
 }

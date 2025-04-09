@@ -1,4 +1,4 @@
-import { BowlingBall } from "./Objects.js";
+import { BowlingBall, Pin } from "./Objects.js";
 import { WebGLManager } from "./WebGLManager.js";
 
 export class SceneManager {
@@ -28,13 +28,18 @@ export class SceneManager {
 
         // Instanciacion de los objetos
         var bowlingBall = new BowlingBall();
-        
+        var pin = new Pin();
+
         // Configuracion de los objetos
         var sphereProgramInfo = webGLManager.getProgramInfoTemplate("SPHERE");
+        var cubeProgramInfo = webGLManager.getProgramInfoTemplate("CUBE");
+
         bowlingBall.setProgramInfo(sphereProgramInfo);
+        pin.setProgramInfo(cubeProgramInfo);
 
         // Añadirlos a la escena
         console.log("Adding bowling ball");
+        //this.objects.push(pin);
         this.objects.push(bowlingBall);
     }
 

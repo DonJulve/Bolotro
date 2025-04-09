@@ -1991,7 +1991,7 @@ for (let i=0; i < wireCubeIndices.length; i++)
 	pointsWireCube.push(cubeVerts[wireCubeIndices[i]]);
 }
 
-const pointsCube = [];
+export const pointsCube = [];
 for (let i=0; i < cubeIndices.length; i++)
 {
 	pointsCube.push(cubeVerts[cubeIndices[i]]);

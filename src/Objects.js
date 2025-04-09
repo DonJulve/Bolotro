@@ -1,4 +1,4 @@
-import { pointsSphere } from "./Geometría.js";
+import { pointsSphere, pointsCube } from "./Geometría.js";
 
 export class BowlingBall {
 
@@ -6,7 +6,7 @@ export class BowlingBall {
         // TODO POINTARRAY
         this.pointsArray = pointsSphere;
         this.uniforms = {
-          u_colorMult: [1.0, 1.0, 1.0, 1.0],  // Color de la bola
+          u_color: [1.0, 1.0, 1.0, 1.0],  // Color de la bola
           u_model: new mat4(),      // Matriz de modelo (posición y transformación)
         };
         this.primType = "triangles";
@@ -26,7 +26,6 @@ export class BowlingBall {
   
 export class Pin {
     constructor(programInfo) {
-        this.programInfo = programInfo;
         this.pointsArray = pointsCube;
         this.uniforms = {
 			u_color: [1.0, 0.0, 0.0, 1.0],
@@ -35,6 +34,10 @@ export class Pin {
 		this.primType = "triangles";      
     }
   
+    setProgramInfo(pInfo) {
+        this.programInfo = pInfo;
+    }
+
     update() {
       // TODO
     }

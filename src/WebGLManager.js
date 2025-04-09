@@ -1,3 +1,4 @@
+import { Camera } from "./Camera.js";
 import { SceneManager } from "./SceneManager.js";
 
 export class WebGLManager {
@@ -19,77 +20,59 @@ export class WebGLManager {
     /**
      * Establece la matriz de proyección para la cámara.
      */
-    #setProjection(pInfo, fov) {
+    #setProjection(fov) {
         const gl = this.gl;
         const aspect = this.canvas.width / this.canvas.height;
         this.projectionMatrix = perspective(fov, aspect, 0.1, 100.0);
-        
-        // Actualiza el uniform en el programa específico
-        if (pInfo && pInfo.uniformLocations) {
-            gl.uniformMatrix4fv(
-                pInfo.uniformLocations.projection, 
-                false, 
-                this.projectionMatrix
-            );
-        }
     }
 
 
     #render() {
+        this.scene.update();
         const gl = this.gl;
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-
-        this.objectsToDraw.forEach(object => {
+        var objects = this.scene.getObjectsToDraw();
+        for (let object of objects) {
+            console.log(object)
             gl.useProgram(object.programInfo.program);
-            
-            // Actualizar matrices y uniforms
-            this.#setUniforms(object.programInfo, {
-                u_model: object.uniforms.u_model,
-                u_color: object.uniforms.u_color,
-                view: this.viewMatrix,
-                projection: this.projectionMatrix
-            });
-
-            // Configurar buffers
-            this.#setBuffersAndAttributes(object.programInfo, object);
-            
-            gl.drawArrays(object.primitive, 0, object.pointsArray.length);
-        });
-
+            this.#setBuffersAndAttributes(object);
+            this.#setUniforms(object);
+            gl.drawArrays(gl.TRIANGLES, 0, object.pointsArray.length);
+        }
         requestAnimationFrame(() => this.#render());
     }
 
     // -----------------
     // UTILS
     // -----------------
-    #setBuffersAndAttributes(pInfo, object) {
+    #setBuffersAndAttributes(object) {
         const gl = this.gl;
+        var pointsArray = object.pointsArray;
+        var pInfo = object.programInfo;
+
         // Load the data into GPU data buffers
         // Vertices
         var vertexBuffer = gl.createBuffer();
         gl.bindBuffer( gl.ARRAY_BUFFER, vertexBuffer );
-        gl.bufferData( gl.ARRAY_BUFFER,  flatten(object.pointsArray), gl.STATIC_DRAW );
+        gl.bufferData( gl.ARRAY_BUFFER,  flatten(pointsArray), gl.STATIC_DRAW );
         gl.vertexAttribPointer( pInfo.attribLocations.vPosition, 4, gl.FLOAT, gl.FALSE, 0, 0 );
         gl.enableVertexAttribArray( pInfo.attribLocations.vPosition );
     }
 
-    #setUniforms(pInfo, uniforms) {
-    const gl = this.gl;
-    
+    #setUniforms(object) {
+        const gl = this.gl;
+        var uniforms = object.uniforms;
+        var pInfo = object.programInfo;
+        var view = this.camera.getViewMatrix();
+
         // Matrices
-        gl.uniformMatrix4fv(pInfo.uniformLocations.projection, false, uniforms.projection);
-        gl.uniformMatrix4fv(pInfo.uniformLocations.view, false, uniforms.view);
-        gl.uniformMatrix4fv(pInfo.uniformLocations.model, false, uniforms.u_model);
-    
-        if (pInfo.uniformLocations.baseColor && uniforms.u_color) {
-            gl.uniform4f(
-                pInfo.uniformLocations.baseColor,
-                uniforms.u_color[0],
-                uniforms.u_color[1],
-                uniforms.u_color[2],
-                uniforms.u_color[3]
-            );
+	    // Copy uniform model values to corresponding values in shaders
+        gl.uniformMatrix4fv( pInfo.uniformLocations.projection, gl.FALSE, this.projectionMatrix);
+        gl.uniformMatrix4fv(pInfo.uniformLocations.view, gl.FALSE, view);
+        if (pInfo.uniformLocations.baseColor != null) {
+            gl.uniform4f(pInfo.uniformLocations.baseColor, uniforms.u_color[0], uniforms.u_color[1], uniforms.u_color[2], uniforms.u_color[3]);
         }
+        gl.uniformMatrix4fv(pInfo.uniformLocations.model, gl.FALSE, uniforms.u_model);
     }
 
 
@@ -107,37 +90,33 @@ export class WebGLManager {
         if (!this.gl) {
             alert("WebGL isn't available");
         }
-
         this.scene = new SceneManager();
-        this.viewMatrix = mat4();
+        this.camera = new Camera();
+
+        // Matriz de proyeccion 3D
         this.projectionMatrix = mat4();
-        
 
         WebGLManager.instance = this;
+        console.log("WebGLManager construido correctamente");
     }
 
     /**
      * Inicializa el contexto y configura WebGL.
      */
-    init(objectsToDraw, fov) {
-    this.objectsToDraw = objectsToDraw;
+    init(fov) {
 		this.#setupGL();
 		this.#setProjection(fov);
-
-		console.log(this.objectsToDraw);
+        console.log("WebGLManager inicializado");
 	}
 
 	start() {
+        console.log("Empezando el renderizado");
 		requestAnimFrame(() => this.#render());
 	}
 
-    updateViewMatrix(eye, target, up) {
-        this.viewMatrix = lookAt(eye, target, up);
-    }
-
     getProgramInfoTemplate(type) {
         const gl = this.gl;
-        const programInfo = {
+        var programInfo = {
             program: null,
             uniformLocations: {},
             attribLocations: {}

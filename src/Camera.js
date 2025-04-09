@@ -1,5 +1,3 @@
-import {vec3} from "../Common/MVnew.js"
-
 export class Camera {
     static instance;
     
@@ -11,7 +9,7 @@ export class Camera {
 
         // TODO CAMBIAR PARA QUE LA CAMARA MIRE HACIA EL CENTRO DEL PLANO
         this.target = vec3(0.0, 0.0, 0.0);     // Donde está mirando la camara
-        this.eye = vec3(10.0, 0.0, 10.0);      // Posicion de la camara
+        this.eye = vec3(5.0, 5.0, 10.0);      // Posicion de la camara
         this.up = vec3(0.0, 1.0, 0.0); 	        // El vector hacia arriba de la camara
 
         this.viewMatrix = lookAt(this.eye, this.target, this.up);
@@ -26,10 +24,15 @@ export class Camera {
         this.viewMatrix = lookAt(this.eye, this.target, this.up);
     }
 
+    getViewMatrix() {
+        this.updateViewMatrix();
+        return this.viewMatrix;
+    }
+
     move(x, y, z) {
-        this.position[0] = x;
-        this.position[1] = y;
-        this.position[2] = z;
+        this.eye[0] += x;
+        this.eye[1] += y;
+        this.eye[2] += z;
         this.updateViewMatrix();
     }
     
