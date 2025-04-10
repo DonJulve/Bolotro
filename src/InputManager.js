@@ -12,7 +12,8 @@ export class InputManager {
     // ----------------------------
     #upKeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            this.camera.move(0,-10,0);
+            // PRUEBA
+            this.camera.move(0,0,-5);
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -21,7 +22,7 @@ export class InputManager {
 
     #downKeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            // TODO
+            this.camera.move(0,0,5);
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -30,7 +31,7 @@ export class InputManager {
 
     #leftKeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            // TODO
+            this.camera.rotateCameraY(-10);
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -39,7 +40,7 @@ export class InputManager {
 
     #rightKeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            // TODO
+            this.camera.rotateCameraY(10);
         }
         else if (estado == "SOLTADA") {
             // TODO

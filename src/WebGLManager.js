@@ -37,7 +37,7 @@ export class WebGLManager {
             gl.useProgram(object.programInfo.program);
             this.#setBuffersAndAttributes(object);
             this.#setUniforms(object);
-            gl.drawArrays(gl.TRIANGLES, 0, object.pointsArray.length);
+            gl.drawArrays(object.primitive, 0, object.pointsArray.length);
         }
         requestAnimationFrame(() => this.#render());
     }
@@ -154,5 +154,23 @@ export class WebGLManager {
 
         return programInfo;
     }
-}
 
+    setPrimitives(objectsToDraw) {	
+        const gl = this.gl;
+        objectsToDraw.forEach(function(object) {
+            switch(object.primType) {
+              case "lines":
+                object.primitive = gl.LINES;
+                break;
+              case "line_strip":
+                object.primitive = gl.LINE_STRIP;
+                break;
+              case "triangles":
+                object.primitive = gl.TRIANGLES;
+                break;
+              default:
+                object.primitive = gl.TRIANGLES;
+            }
+        });	
+    }
+}
