@@ -2,7 +2,7 @@ import { pointsSphere, pointsCube, pointsPlane } from "./Geometría.js";
 
 export class BowlingBall {
 
-    constructor() {
+    constructor(x, y, z) {
         // TODO POINTARRAY
         this.pointsArray = pointsSphere;
         this.uniforms = {
@@ -10,18 +10,38 @@ export class BowlingBall {
           u_model: new mat4(),      // Matriz de modelo (posición y transformación)
         };
         this.primType = "triangles";
-        this.primitive;
 
-        // TODO ESTO QUITAR IRÁ DENTRO DEL MOTOR DE FISICAS
-        this.position = [0.0, 0.0, 0.0];
+        // Propiedades fisicas
+        this.velocity = vec3(0, 0, 0);
+        this.position = vec3(x, y, z);
+
+        this.velocityNextFrame = vec3(0,0,0);
+        this.positionNextFrame = vec3(0,0,0);
+
+        this.#updatePosition();
+    }
+
+    #updatePosition() {
+        this.uniforms.u_model = translate(this.position[0], this.position[1], this.position[2]);
     }
 
     setProgramInfo(pInfo) {
         this.programInfo = pInfo;
     }
 
-    update() {
 
+    calculateNextFrame() {
+        // PRUEBAS
+        const g = vec3(0, 0.01, 0);
+        this.positionNextFrame = subtract(this.position, g);
+        this.#updatePosition();
+        console.log(this.position);
+    }
+
+    applyNextFrame() {
+        this.velocity = this.velocityNextFrame;
+        this.position = this.positionNextFrame;
+        this.#updatePosition();
     }
   }
   
@@ -32,13 +52,21 @@ export class Pin {
 			u_color: [1.0, 0.0, 0.0, 1.0],
 			u_model: new mat4(),
 		};
-		this.primType = "triangles";  
-        this.#move(x, y, z);
+		this.primType = "triangles";
+
+        // Propiedades fisicas
+        this.velocity = vec3(0, 0, 0);
+        this.position = vec3(x, y, z);
+
+        this.velocityNextFrame = vec3(0,0,0);
+        this.positionNextFrame = vec3(0,0,0);
+
+        this.#updatePosition();
         this.#rotate();    
     }
 
-    #move(x, y, z) {
-        const translationMatrix = translate(x, y, z); // solo mueve en Y
+    #updatePosition() {
+        const translationMatrix = translate(this.position[0], this.position[1], this.position[2]); // solo mueve en Y
         this.uniforms.u_model = mult(translationMatrix, this.uniforms.u_model);
     }
 
@@ -51,8 +79,14 @@ export class Pin {
         this.programInfo = pInfo;
     }
 
-    update() {
+    calculateNextFrame() {
       // TODO
+    }
+
+    applyNextFrame() {
+        this.velocity = this.velocityNextFrame;
+        this.position = this.positionNextFrame;
+        this.#updatePosition();
     }
 }
 
@@ -60,7 +94,7 @@ export class Plano {
     constructor() {
         this.pointsArray = pointsPlane;
         this.uniforms = {
-			u_color: [0.0, 1.0, 1.0, 1.0],
+			u_color: [0.0, 1.0, 0.0, 0.5],
 			u_model: new mat4(),
 		};
 		this.primType = "triangles";      
@@ -84,7 +118,11 @@ export class Plano {
         this.programInfo = pInfo;
     }
 
-    update() {
+    calculateNextFrame() {
       // TODO
+    }
+
+    applyNextFrame() {
+
     }
 }

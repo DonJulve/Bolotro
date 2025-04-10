@@ -33,7 +33,6 @@ export class WebGLManager {
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
         var objects = this.scene.getObjectsToDraw();
         for (let object of objects) {
-            console.log(object)
             gl.useProgram(object.programInfo.program);
             this.#setBuffersAndAttributes(object);
             this.#setUniforms(object);

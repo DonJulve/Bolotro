@@ -28,7 +28,7 @@ export class SceneManager {
 
         // Instanciacion de los objetos
         var plano = new Plano();
-        var bowlingBall = new BowlingBall();
+        var bowlingBall = new BowlingBall(-5, 2, 0);
         var pin = new Pin(2, 0, 0);
 
         // Configuracion de los objetos
@@ -51,9 +51,19 @@ export class SceneManager {
     }
 
     update(dt) {
-      // Actualizar la lógica del juego: bola, bolos, etc.
-      console.log("Updating scene");
+        console.log("Updating scene");
 
+        // Calculamos el siguiente frame para todos los objetos
+        for (let object of this.objects) {
+            object.calculateNextFrame();
+        }
+
+        // Una vez todos los objetos tengan sus nuevos frames calculados
+        // actualizamos los objetos
+        for (let object of this.objects) {
+            object.applyNextFrame();
+        }
+        
     }
 
 
