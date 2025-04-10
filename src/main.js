@@ -7,8 +7,10 @@ const sceneManager = new SceneManager();
 const webgl = new WebGLManager();
 
 window.onload = function init() {
-    inputManager.start();
     sceneManager.setupScene();
+    
+    inputManager.setBowlingBall(sceneManager.getBowlingBall());
+    inputManager.start();
     
     webgl.init(45.0);
     webgl.start();

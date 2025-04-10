@@ -29,6 +29,7 @@ export class SceneManager {
         // Instanciacion de los objetos
         var plano = new Plano();
         var bowlingBall = new BowlingBall(-5, 2, 0);
+        this.bowlingBall = bowlingBall;
         var pin = new Pin(2, 0, 0);
 
         // Configuracion de los objetos
@@ -69,5 +70,10 @@ export class SceneManager {
 
     getObjectsToDraw() {
         return this.objects
+    }
+
+    // Pasar la instancia de la bola
+    getBowlingBall(){
+        return this.bowlingBall;
     }
   }

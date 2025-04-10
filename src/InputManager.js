@@ -5,33 +5,22 @@ export class InputManager {
         // Conjunto para ver que teclas están presionadas
         this.keysPressed = new Set(); 
         this.camera = new Camera();
+        this.bowlingBall = null;
         // TODO
     }
     // ----------------------------
     // Funciones Privadas
     // ----------------------------
-    #upKeyHandler(estado) {
-        if (estado == "PRESIONADA") {
-            // PRUEBA
-            this.camera.move(0,0,-5);
-        }
-        else if (estado == "SOLTADA") {
-            // TODO
-        }
-    }
-
-    #downKeyHandler(estado) {
-        if (estado == "PRESIONADA") {
-            this.camera.move(0,0,5);
-        }
-        else if (estado == "SOLTADA") {
-            // TODO
-        }
-    }
-
     #leftKeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            this.camera.rotateCameraY(-10);
+            if (this.keysPressed.has("Shift")){
+                this.camera.rotateCamera(false);
+                this.bowlingBall.rotateWithCamera(this.camera, false, this.camera.constructor.ROTATE_STEP, this.camera.constructor.MAX_ROTATION);
+            }
+            else {
+                this.camera.moveCamera(false);
+                this.bowlingBall.moveWithCamera(this.camera, false, this.camera.constructor.MOVE_STEP, this.camera.constructor.MAX_HORIZONTAL);
+            }
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -40,7 +29,14 @@ export class InputManager {
 
     #rightKeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            this.camera.rotateCameraY(10);
+            if (this.keysPressed.has("Shift")){
+                this.camera.rotateCamera(true);
+                this.bowlingBall.rotateWithCamera(this.camera, true, this.camera.constructor.ROTATE_STEP, this.camera.constructor.MAX_ROTATION);
+            }
+            else {
+                this.camera.moveCamera(true);
+                this.bowlingBall.moveWithCamera(this.camera, true, this.camera.constructor.MOVE_STEP, this.camera.constructor.MAX_HORIZONTAL);
+            }
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -58,7 +54,8 @@ export class InputManager {
 
     #R_KeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            // TODO
+            this.camera.reset();
+            this.bowlingBall.reset();
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -76,12 +73,6 @@ export class InputManager {
 
     #onKeyDown(event) {
         switch(event.key) {
-            case "ArrowUp":
-                this.#upKeyHandler("PRESIONADA");
-                break;
-            case "ArrowDown":
-                this.#downKeyHandler("PRESIONADA");
-                break;
             case "ArrowRight":
                 this.#rightKeyHandler("PRESIONADA");
                 break;
@@ -107,12 +98,6 @@ export class InputManager {
 
     #onKeyUp(event) {
         switch(event.key) {
-            case "ArrowUp":
-                this.#upKeyHandler("SOLTADA");
-                break;
-            case "ArrowDown":
-                this.#downKeyHandler("SOLTADA");
-                break;
             case "ArrowRight":
                 this.#rightKeyHandler("SOLTADA");
                 break;
@@ -148,5 +133,10 @@ export class InputManager {
     stop() {
         window.removeEventListener("keydown", this.#onKeyDown);
         window.removeEventListener("keyup", this.#onKeyUp);
+    }
+
+    // Para obtener la instancia de la bola
+    setBowlingBall(bowlingBall){
+        this.bowlingBall = bowlingBall;
     }
 }
