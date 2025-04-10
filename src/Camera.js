@@ -13,6 +13,7 @@ export class Camera {
     static INITIAL_TARGET = vec3(0.0, 0.0, 0.0);
     static INITIAL_EYE = vec3(-10.0, 10.0, 0.0);
     static INITIAL_UP = vec3(0.0, 1.0, 0.0);
+    static INITIAL_VEC_POS_INICIAL = vec3(5.0, 5.0, 5.0);
 
     static instance;
     constructor() {
@@ -31,7 +32,7 @@ export class Camera {
         // Angulo de rotacion de la camara sobre el ejeY
         this.rotationAngle = 0;
         this.vecTarget = subtract(this.eye, this.target); // Vector dirección de la cámara
-        this.vecPosInicial = vec3(5.0, 0.0, 5.0); // Posición relativa de la esfera
+        this.vecPosInicial = Camera.INITIAL_VEC_POS_INICIAL; // Posición relativa de la esfera
         
         Camera.instance = this;
         
@@ -100,7 +101,7 @@ export class Camera {
         this.up = Camera.INITIAL_UP;
         this.rotationAngle = 0;
         this.vecTarget = subtract(this.eye, this.target);
-        this.vecPosInicial = vec3(5.0, 0.0, 5.0);
+        this.vecPosInicial = Camera.INITIAL_VEC_POS_INICIAL;
         this.updateViewMatrix();
     }
 }

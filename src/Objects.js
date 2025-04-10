@@ -51,7 +51,9 @@ export class BowlingBall {
             this.initialVelocity[1],
             this.initialVelocity[2]
         );
-        this.orientation = mat4();
+        this.orientation = this.initialOrientation;
+        this.currentRotationAngle = 0;
+        this.currentHorizontalOffset = 0;
         this.#updatePosition();
     }
 
