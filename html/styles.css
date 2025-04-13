@@ -27,6 +27,9 @@ body {
     filter: blur(30px);
 }
 
+.buttons a {
+    text-decoration: none;
+}
 
 button {
     width: 500px;
