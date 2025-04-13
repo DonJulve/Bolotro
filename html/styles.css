@@ -1,0 +1,68 @@
+body {
+    text-align: center;
+    justify-content: center;
+    align-content: center;
+
+    background-image:
+        linear-gradient(
+            rgba(0, 0, 0, 0.5),
+            rgba(0, 0, 0, 0.5)
+        ),
+        url(../assets/fondo.jpg);
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+}
+
+.mainTitle {
+    font-size: 72;
+    color:#00DDFF;
+    font-family: fantasy;
+}
+
+.mainTitle::before {
+    content: "BOLOTRO";
+    position: absolute;
+    transform: scale(1.1);
+    filter: blur(30px);
+}
+
+
+button {
+    width: 500px;
+    height: 40px;
+    margin: auto;
+    margin-bottom: 10px; 
+    border: 0;
+    background-image: linear-gradient(
+        150deg,
+        #9500ff,
+        #09f,
+        #00DDFF
+    );
+    border-radius: 8px;
+    color: #fff;
+    display: flex;
+    cursor: pointer;
+    transition: .3;
+}
+
+
+button span {
+    background-color: #111;
+    width: 495px;
+    height: 35px;
+    margin: auto;
+    border-radius: 6px;
+    transition: .3s;
+    align-content: center;
+}
+
+
+button:hover span {
+    background: none;
+}
+
+button:active {
+    transform: scale(0.9);
+}
