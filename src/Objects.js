@@ -1,13 +1,21 @@
 import { pointsSphere, pointsCube, pointsPlane } from "./Geometría.js";
+import { checkCollision, resolveCollision } from "./PhysicsEngine.js";
+import { SceneManager } from "./SceneManager.js";
 
 export class BowlingBall {
 
     constructor(x, y, z) {
-        // TODO POINTARRAY
-        // Guardo posicion y velocidad inicial
+        this.scene = new SceneManager();
+
+        // Para control de la camara
+        this.orientation = mat4();
+        this.currentRotationAngle = 0;
+        this.currentHorizontalOffset = 0;
+
+        // Guardo posicion y velocidad inicial oara el reset
         this.initialPosition = vec3(x, y, z);
-        this.initialVelocity = vec3(0, 0, 0);
-        this.initialOrientation = mat4(); // Orientación inicial
+        this.initialVelocity = vec3(0, 0.0, 0);
+        this.initialOrientation = mat4();
     
         this.pointsArray = pointsSphere;
         this.uniforms = {
@@ -17,16 +25,15 @@ export class BowlingBall {
         this.primType = "triangles";
 
         // Propiedades fisicas
-        this.velocity = vec3(0, 0, 0);
+        this.mass = 1;
+        this.velocity = vec3(5, 0, 0);
         this.position = vec3(x, y, z);
-        this.orientation = mat4();
-
-        // Para control de límites
-        this.currentRotationAngle = 0;
-        this.currentHorizontalOffset = 0;
 
         this.velocityNextFrame = vec3(0,0,0);
         this.positionNextFrame = vec3(0,0,0);
+
+        // Propiedades exclusivas de la bola
+        this.radius = 0.5
 
         this.#updatePosition();
     }
@@ -108,12 +115,47 @@ export class BowlingBall {
     }
 
 
-    calculateNextFrame() {
-        // PRUEBAS
-        const g = vec3(0, 0.01, 0);
-        this.positionNextFrame = subtract(this.position, g);
-        this.#updatePosition();
-        console.log(this.position);
+    calculateNextFrame(dt) {
+        const sceneObjects = this.scene.getObjectsToDraw();
+
+        // Si no hay cambios las siguientes velocidades serán las de ahora
+        const friction = 0.95;
+        const frictionVector = vec3(Math.pow(friction, dt),Math.pow(friction, dt), Math.pow(friction, dt))
+        this.velocityNextFrame =  mult(this.velocity, frictionVector);
+        this.positionNextFrame = add(this.position, mult(dt, this.velocity));
+
+        
+        // - - - DETECCION DE COLISIONES - - - - 
+        let collisions = [];
+        for(let object of sceneObjects) {
+            // No queremos comparar las colisiones con nosotros mismos
+            if (object != this) {
+                if (checkCollision(this, object)) {
+                    console.log("COLISION!");
+                    
+                    // Añadimos al vector de objetos que tratar el objeto con el que hemos colisionado.
+                    collisions.push(object);
+                }
+            }
+        }
+
+        // - - - - TRATAMIENTO DE COLISIONES - - - -
+        for(let object of collisions) {
+            const type = object.constructor.name;
+            if (type == "Pin") {
+                resolveCollision(dt, this, object);
+            }
+            else if (type == "Plano") {
+                // Para que no detecte colisiones infinitas y se quede atascado cuando detectamos
+                // la colision separamos un poco la bola del suelo
+                const planeSeparation = vec3(0, 0.05, 0);
+                this.velocityNextFrame = vec3(this.velocity[0], this.velocity[1]*-0.5, this.velocity[2]);
+                this.positionNextFrame = add(add(this.position, planeSeparation), mult(dt, this.velocityNextFrame));
+            }
+            else {
+
+            }
+        }
     }
 
     applyNextFrame() {
@@ -125,6 +167,7 @@ export class BowlingBall {
   
 export class Pin {
     constructor(x, y, z) {
+        this.scene = new SceneManager();
         this.pointsArray = pointsCube;
         this.uniforms = {
 			u_color: [1.0, 0.0, 0.0, 1.0],
@@ -133,32 +176,69 @@ export class Pin {
 		this.primType = "triangles";
 
         // Propiedades fisicas
+        this.mass = 0.5;
         this.velocity = vec3(0, 0, 0);
         this.position = vec3(x, y, z);
 
         this.velocityNextFrame = vec3(0,0,0);
         this.positionNextFrame = vec3(0,0,0);
 
-        this.#updatePosition();
-        this.#rotate();    
+        // Propiedades exclusivas del pin
+        this.pinNumber = Pin.numPines++;
+        this.width = 1;
+        this.depth = 1
+        this.height = 3;
+
+        
+        this.#updatePosition();    
     }
 
     #updatePosition() {
-        const translationMatrix = translate(this.position[0], this.position[1], this.position[2]); // solo mueve en Y
-        this.uniforms.u_model = mult(translationMatrix, this.uniforms.u_model);
+        //const translationMatrix =  // solo mueve en Y
+        this.uniforms.u_model = translate(this.position[0], this.position[1], this.position[2]);
     }
 
-    #rotate() {
-        const rotationMatrix = rotate(90, vec3(1, 0, 0)); 
-        this.uniforms.u_model = mult(rotationMatrix, this.uniforms.u_model);
-    }
   
     setProgramInfo(pInfo) {
         this.programInfo = pInfo;
     }
 
-    calculateNextFrame() {
-      // TODO
+    calculateNextFrame(dt) {
+        const sceneObjects = this.scene.getObjectsToDraw();
+
+        // Si no hay cambios las siguientes velocidades serán las de ahora
+        const friction = 0.7;
+        const frictionVector = vec3(Math.pow(friction, dt),Math.pow(friction, dt), Math.pow(friction, dt))
+        this.velocityNextFrame =  mult(this.velocity, frictionVector);
+        this.positionNextFrame = add(this.position, mult(dt, this.velocity));
+
+        
+        // - - - DETECCION DE COLISIONES - - - - 
+        let collisions = [];
+        for(let object of sceneObjects) {
+            // No queremos comparar las colisiones con nosotros mismos
+            if (object != this) {
+                if (checkCollision(this, object)) {
+                    debugger;
+                    // Añadimos al vector de objetos que tratar el objeto con el que hemos colisionado.
+                    collisions.push(object);
+                }
+            }
+        }
+
+        // - - - - TRATAMIENTO DE COLISIONES - - - -
+        for(let object of collisions) {
+            const type = object.constructor.name;
+            if (type == "Pin") {
+                resolveCollision(dt, this, object);
+            }
+            else if (type == "BowlingBall") {
+                resolveCollision(dt, this, object);
+            }
+            else {
+
+            }
+        }
     }
 
     applyNextFrame() {
@@ -175,10 +255,18 @@ export class Plano {
 			u_color: [0.0, 1.0, 0.0, 0.5],
 			u_model: new mat4(),
 		};
-		this.primType = "triangles";      
-        this.#rotate();
-        this.#moveDown();
+		this.primType = "triangles";   
+        
+        this.normal = vec3(0, 1, 0);
+        this.position = vec3(0, 0, 0);
 
+        // Caracteristicas del plano
+        this.width = 10;
+        this.depth = 10
+        this.height = 0;
+
+
+        this.#rotate();
     }
     
 
@@ -187,20 +275,17 @@ export class Plano {
         this.uniforms.u_model = mult(rotationMatrix, this.uniforms.u_model);
     }
 
-    #moveDown() {
-        const translationMatrix = translate(0.0, -1.0, 0.0); // solo mueve en Y
-        this.uniforms.u_model = mult(translationMatrix, this.uniforms.u_model);
-    }
-
     setProgramInfo(pInfo) {
         this.programInfo = pInfo;
     }
 
     calculateNextFrame() {
-      // TODO
+        // El plano no se mueve 
+        return;
     }
 
     applyNextFrame() {
-
+        // El plano no se mueve
+        return; 
     }
 }

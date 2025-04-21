@@ -2,7 +2,8 @@ import { Camera } from "./Camera.js";
 import { SceneManager } from "./SceneManager.js";
 
 export class WebGLManager {
-
+    static last_tick;
+    static actual_tick;
     // ----------------------------
     // Funciones Privadas
     // ----------------------------
@@ -28,7 +29,14 @@ export class WebGLManager {
 
 
     #render() {
-        this.scene.update();
+        // Calculo delta Time
+        WebGLManager.actual_tick = Date.now();
+        var dt = (WebGLManager.actual_tick - WebGLManager.last_tick)/1000;
+        
+        // Actualizacion de la escena
+        this.scene.update(dt);
+
+        // Renderizacion de la escena
         const gl = this.gl;
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
         var objects = this.scene.getObjectsToDraw();
@@ -38,6 +46,7 @@ export class WebGLManager {
             this.#setUniforms(object);
             gl.drawArrays(object.primitive, 0, object.pointsArray.length);
         }
+        WebGLManager.last_tick = WebGLManager.actual_tick;
         requestAnimationFrame(() => this.#render());
     }
 
@@ -97,6 +106,8 @@ export class WebGLManager {
 
         WebGLManager.instance = this;
         console.log("WebGLManager construido correctamente");
+
+        WebGLManager.last_tick = Date.now();
     }
 
     /**

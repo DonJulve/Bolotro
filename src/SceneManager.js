@@ -28,9 +28,11 @@ export class SceneManager {
 
         // Instanciacion de los objetos
         var plano = new Plano();
-        var bowlingBall = new BowlingBall(-5, 2, 0);
-        this.bowlingBall = bowlingBall;
-        var pin = new Pin(2, 0, 0);
+        var bowlingBall = new BowlingBall(-5, 1.5, 0.5);
+        //this.bowlingBall = bowlingBall;
+        var pin = new Pin(2, 1.5, 0);
+        var pin2 = new Pin(0, 1.5, 0);
+
 
         // Configuracion de los objetos
         var sphereProgramInfo = webGLManager.getProgramInfoTemplate("SPHERE");
@@ -39,12 +41,14 @@ export class SceneManager {
 
         bowlingBall.setProgramInfo(sphereProgramInfo);
         pin.setProgramInfo(cubeProgramInfo);
+        pin2.setProgramInfo(cubeProgramInfo);
         plano.setProgramInfo(planoProgramInfo);
 
         // Añadirlos a la escena
         console.log("Adding bowling ball");
 
         this.objects.push(pin);
+        this.objects.push(pin2);
         this.objects.push(bowlingBall);
         this.objects.push(plano);
 
@@ -56,7 +60,7 @@ export class SceneManager {
 
         // Calculamos el siguiente frame para todos los objetos
         for (let object of this.objects) {
-            object.calculateNextFrame();
+            object.calculateNextFrame(dt);
         }
 
         // Una vez todos los objetos tengan sus nuevos frames calculados
