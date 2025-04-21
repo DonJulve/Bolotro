@@ -1,5 +1,5 @@
 import { pointsSphere, pointsCube, pointsPlane } from "./Geometría.js";
-import { checkCollision, resolveCollision } from "./PhysicsEngine.js";
+import { checkCollision, resolveCollision,  multVectScalar } from "./PhysicsEngine.js";
 import { SceneManager } from "./SceneManager.js";
 
 export class BowlingBall {
@@ -14,7 +14,7 @@ export class BowlingBall {
 
         // Guardo posicion y velocidad inicial oara el reset
         this.initialPosition = vec3(x, y, z);
-        this.initialVelocity = vec3(0, 0.0, 0);
+        this.initialVelocity = vec3(0, 0, 0);
         this.initialOrientation = mat4();
     
         this.pointsArray = pointsSphere;
@@ -25,8 +25,8 @@ export class BowlingBall {
         this.primType = "triangles";
 
         // Propiedades fisicas
-        this.mass = 1;
-        this.velocity = vec3(5, 0, 0);
+        this.mass = 10;
+        this.velocity = vec3(10, 0, 2);
         this.position = vec3(x, y, z);
 
         this.velocityNextFrame = vec3(0,0,0);
@@ -119,11 +119,12 @@ export class BowlingBall {
         const sceneObjects = this.scene.getObjectsToDraw();
 
         // Si no hay cambios las siguientes velocidades serán las de ahora
-        const friction = 0.95;
-        const frictionVector = vec3(Math.pow(friction, dt),Math.pow(friction, dt), Math.pow(friction, dt))
-        this.velocityNextFrame =  mult(this.velocity, frictionVector);
-        this.positionNextFrame = add(this.position, mult(dt, this.velocity));
+        const GRAVITY = vec3(0, -20, 0)
+        let gravityEffect = multVectScalar(GRAVITY, dt); 
+        gravityEffect = vec3(gravityEffect[0], gravityEffect[1], gravityEffect[2]);
 
+        this.velocityNextFrame = add(this.velocity, gravityEffect); 
+        this.positionNextFrame = add(this.position, mult(dt, this.velocity));
         
         // - - - DETECCION DE COLISIONES - - - - 
         let collisions = [];
@@ -141,20 +142,7 @@ export class BowlingBall {
 
         // - - - - TRATAMIENTO DE COLISIONES - - - -
         for(let object of collisions) {
-            const type = object.constructor.name;
-            if (type == "Pin") {
-                resolveCollision(dt, this, object);
-            }
-            else if (type == "Plano") {
-                // Para que no detecte colisiones infinitas y se quede atascado cuando detectamos
-                // la colision separamos un poco la bola del suelo
-                const planeSeparation = vec3(0, 0.05, 0);
-                this.velocityNextFrame = vec3(this.velocity[0], this.velocity[1]*-0.5, this.velocity[2]);
-                this.positionNextFrame = add(add(this.position, planeSeparation), mult(dt, this.velocityNextFrame));
-            }
-            else {
-
-            }
+            resolveCollision(dt, this, object);
         }
     }
 
@@ -176,9 +164,12 @@ export class Pin {
 		this.primType = "triangles";
 
         // Propiedades fisicas
-        this.mass = 0.5;
+        this.mass = 1;
+        
         this.velocity = vec3(0, 0, 0);
         this.position = vec3(x, y, z);
+        this.angularVelocity = vec3(0, 0, 0);
+        this.rotationMatrix = mat4();
 
         this.velocityNextFrame = vec3(0,0,0);
         this.positionNextFrame = vec3(0,0,0);
@@ -194,8 +185,10 @@ export class Pin {
     }
 
     #updatePosition() {
-        //const translationMatrix =  // solo mueve en Y
-        this.uniforms.u_model = translate(this.position[0], this.position[1], this.position[2]);
+        const translationMatrix = translate(this.position[0], this.position[1], this.position[2]);
+
+        // Asegúrate de tener this.rotationMatrix inicializada en el constructor como mat4()
+        this.uniforms.u_model = mult(translationMatrix, this.rotationMatrix);
     }
 
   
@@ -207,19 +200,32 @@ export class Pin {
         const sceneObjects = this.scene.getObjectsToDraw();
 
         // Si no hay cambios las siguientes velocidades serán las de ahora
-        const friction = 0.7;
-        const frictionVector = vec3(Math.pow(friction, dt),Math.pow(friction, dt), Math.pow(friction, dt))
-        this.velocityNextFrame =  mult(this.velocity, frictionVector);
+        const GRAVITY = vec3(0, -9.81, 0)
+        let gravityEffect = multVectScalar(GRAVITY, dt); 
+        gravityEffect = vec3(gravityEffect[0], gravityEffect[1], gravityEffect[2]);
+
+        this.velocityNextFrame = add(this.velocity, gravityEffect); 
         this.positionNextFrame = add(this.position, mult(dt, this.velocity));
 
-        
+        // Gestion de la velocidad angular
+        const angle = length(this.angularVelocity) * dt;
+        if (angle > 0.001) { // umbral para evitar micro-rotaciones
+            // Eje normalizado de rotación
+            const axis = normalize(this.angularVelocity);
+
+            // Crear matriz de rotación incremental
+            const rotMat = rotate(angle, axis);
+
+            // Acumular rotación
+            this.rotationMatrix = mult(rotMat, this.rotationMatrix);
+        }
+
         // - - - DETECCION DE COLISIONES - - - - 
         let collisions = [];
         for(let object of sceneObjects) {
             // No queremos comparar las colisiones con nosotros mismos
             if (object != this) {
                 if (checkCollision(this, object)) {
-                    debugger;
                     // Añadimos al vector de objetos que tratar el objeto con el que hemos colisionado.
                     collisions.push(object);
                 }
@@ -228,16 +234,7 @@ export class Pin {
 
         // - - - - TRATAMIENTO DE COLISIONES - - - -
         for(let object of collisions) {
-            const type = object.constructor.name;
-            if (type == "Pin") {
-                resolveCollision(dt, this, object);
-            }
-            else if (type == "BowlingBall") {
-                resolveCollision(dt, this, object);
-            }
-            else {
-
-            }
+            resolveCollision(dt, this, object);
         }
     }
 

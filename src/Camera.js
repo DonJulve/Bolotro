@@ -11,7 +11,7 @@ export class Camera {
 
 
     static INITIAL_TARGET = vec3(0.0, 1.0, 0.0);
-    static INITIAL_EYE = vec3(-5.0, 5.0, 5.0);
+    static INITIAL_EYE = vec3(-10.0, 10.0, 5.0);
     static INITIAL_UP = vec3(0.0, 1.0, 0.0);
     static INITIAL_VEC_POS_INICIAL = vec3(5.0, 5.0, 5.0);
 

@@ -80,11 +80,28 @@ function checkSpherePlane(sphere, plane) {
 }
 
 
+function checkAabbPlane(pin, plane) {
+    // Obtener el punto MÁS BAJO del cubo (en coordenadas locales)
+    const halfHeight = pin.height / 2;
+    const lowestLocalPoint = vec3(0, -halfHeight, 0); // Punto inferior central del cubo
+
+    // Transformar este punto al espacio mundial usando la matriz del pin
+    const lowestWorldPoint = multVec3(pin.uniforms.u_model, lowestLocalPoint);
+
+    // Calcular distancia al plano (n · p + d = 0)
+    const planeDistance = dot(plane.normal, plane.position); // d = -(n · p0)
+    const vertexDistance = dot(plane.normal, lowestWorldPoint) - planeDistance;
+
+    // Si la distancia es negativa, el punto está "debajo" del plano
+    return vertexDistance < 0;
+}
+
 // Mapa de handlers a colisiones
 const collisionHandlers = new Map([
     [["BowlingBall", "Pin"].sort().join("-"), unorderedHandler("BowlingBall", "Pin", checkSphereAabb)],
     [["BowlingBall", "Plano"].sort().join("-"), unorderedHandler("BowlingBall", "Plano", checkSpherePlane)],
-    [["Pin", "Pin"].join("-"), checkBoundingBoxes]
+    [["Pin", "Pin"].join("-"), checkBoundingBoxes],
+    [["Pin", "Plano"].sort().join("-"), unorderedHandler("Pin", "Plano", checkAabbPlane)]
 ]);
 
 export function checkCollision(object1, object2) {
@@ -104,7 +121,9 @@ export function checkCollision(object1, object2) {
 // RESOLVE DE COLISONES
 //
 // ------------------------------
+
 // Resuelve el momento lineal para el obj1 sabiendo que choca con obj2
+// * FUNCIONA
 function resolveLinearMomentum(dt, obj1, obj2) {
     // Vector normal de colision de ball hacia cube
     const normal = normalize(subtract(obj1.position, obj2.position));
@@ -131,28 +150,100 @@ function resolveLinearMomentum(dt, obj1, obj2) {
 
     // Velocidades finales = tangencial + nueva normal
     obj1.velocityNextFrame = add(v1tangent, v1nAfterVec);
-    obj1.positionNextFrame = add(obj1.position, mult(dt, obj1.velocityNextFrame)); 
+    obj1.positionNextFrame = add(obj1.position, mult(dt*2, obj1.velocityNextFrame)); 
 }
 
+// * FUNCIONA
+function resolveAngularMomentum(dt, obj1, obj2) {
+    const r = subtract(obj1.position, obj2.position);   // Punto del impacto
+    const force = multVectScalar(obj2.velocity, obj2.mass*-100);       // Fuerza que se aplica sobre obj1
+
+    const vec3R = vec3(r[0], r[1], r[2]);
+    const vec3force = vec3(force[0], force[1], force[2]);
+    const torque = cross(vec3R, vec3force);
+
+    const inertia = 1;
+    const angularAcceleration = multVectScalar(torque, 1 / inertia);
+
+    let vec3AngularAcceleration = multVectScalar(angularAcceleration, dt);
+    vec3AngularAcceleration = vec3(vec3AngularAcceleration[0], vec3AngularAcceleration[1], vec3AngularAcceleration[2])
+    obj1.angularVelocity = add(obj1.angularVelocity, vec3AngularAcceleration);
+}
+
+function separateObjects(pin, ball) {
+    const epsilon = 1; // pequeña distancia para evitar re-colisión
+
+    // Vector de dirección desde la bola hacia el pin
+    let dir = subtract(pin.position, ball.position);
+    let distance = length(dir);
+
+    if (distance === 0) {
+        // Si están exactamente en el mismo punto, mueve el pin en una dirección arbitraria
+        dir = vec3(0, 1, 0);
+        distance = 1;
+    } else {
+        dir = normalize(dir);
+    }
+
+    // Supón que ambos son esferas o puedes estimar radios de colisión aproximados
+    const pinRadius = 0.5;
+    const ballRadius = ball.radius;
+
+    const minDistance = pinRadius + ballRadius;
+    const overlap = minDistance - distance;
+
+    if (overlap > 0) {
+        const correction = scale((overlap + epsilon) / 2, dir);
+
+        // Separar ambos objetos a partes iguales
+        pin.positionNextFrame = add(pin.position, correction);
+        ball.positionNextFrame = subtract(ball.position, correction);
+    }
+}
 // Actualiza pin1 sabiendo que ha chocado con pin2
 function resolvePinPin(dt, pin1, pin2) {
     resolveLinearMomentum(dt, pin1, pin2);
+    resolveAngularMomentum(dt, pin1, pin2);
+    separateObjects(pin1, pin2)
 }
 
 // Actualiza ball sabiendo que ha chocado con pin
 function resolveBallPin(dt, ball, pin) {
     resolveLinearMomentum(dt, ball, pin);
+    separateObjects(ball, pin)
 }
+
+
+
 // Actualiza pin sabiendo que ha chocado con ball
 function resolvePinBall (dt, pin, ball) {
     resolveLinearMomentum(dt, pin, ball);
+    resolveAngularMomentum(dt, pin, ball);
+    separateObjects(pin, ball)
+}
+
+function resolveBallPlano(dt, ball, plano) {
+    ball.velocityNextFrame = vec3(ball.velocity[0], ball.velocity[1]*-0.4, ball.velocity[2]);
+    ball.positionNextFrame = add(ball.position, mult(dt, ball.velocityNextFrame));
+}
+
+function resolvePinPlano(dt, pin, plano) {
+    if (pin.velocity[1] < 0) {
+        pin.velocityNextFrame = vec3(pin.velocity[0], pin.velocity[1]*-0.4, pin.velocity[2]);
+        //pin.rotationMatrix = multVectScalar(pin.rotationMatrix, 0.9)
+    }
+    
+    //pin.positionNextFrame = add(pin.position, mult(dt, pin.velocityNextFrame));
 }
 
 // Mapa de handlers a resoluciones de colisiones
 const resolveHandlers = new Map([
     [["BowlingBall", "Pin"].join("-"), resolveBallPin],
     [["Pin", "BowlingBall"].join("-"), resolvePinBall],
-    [["Pin", "Pin"].join("-"), resolvePinPin]
+    [["Pin", "Pin"].join("-"), resolvePinPin],
+    [["BowlingBall", "Plano"].join("-"), resolveBallPlano],
+    [["Pin", "Plano"].join("-"), resolvePinPlano],
+
 ]);
 
 export function resolveCollision(dt, object1, object2) {
@@ -189,6 +280,13 @@ function unorderedHandler(expected1, expected2, handler) {
 }
 
 // Multiplicar vector por escalar
-function multVectScalar(vec, scalar) {
+export function multVectScalar(vec, scalar) {
     return vec.map(v => v * scalar);
+}
+
+function multVec3(matrix, vec) {
+    const x = matrix[0] * vec[0] + matrix[4] * vec[1] + matrix[8] * vec[2] + matrix[12];
+    const y = matrix[1] * vec[0] + matrix[5] * vec[1] + matrix[9] * vec[2] + matrix[13];
+    const z = matrix[2] * vec[0] + matrix[6] * vec[1] + matrix[10] * vec[2] + matrix[14];
+    return vec3(x, y, z);
 }

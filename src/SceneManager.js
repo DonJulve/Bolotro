@@ -28,9 +28,8 @@ export class SceneManager {
 
         // Instanciacion de los objetos
         var plano = new Plano();
-        var bowlingBall = new BowlingBall(-5, 1.5, 0.5);
-        //this.bowlingBall = bowlingBall;
-        var pin = new Pin(2, 1.5, 0);
+        var bowlingBall = new BowlingBall(-5, 1, 0);
+        var pin = new Pin(2, 1.5, 1.5);
         var pin2 = new Pin(0, 1.5, 0);
 
 
