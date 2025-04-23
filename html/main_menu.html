@@ -3,6 +3,7 @@
     <!--Encabezado-->
     <head>
         <link rel="stylesheet" href="./styles.css">
+        <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
 
         <title>Bolotro</title>
     </head>
@@ -11,18 +12,34 @@
     <body>
         <h1 class="mainTitle">BOLOTRO</h1>
         
-        <div class="buttons">
-            
-            <a href="../src/Bolotro.html">
-                <button>
-                    <span>Jugar</span>
+        <div class="content">
+            <!-------------------------------------------------------------------Seleccionar número de bolos-->
+            <div class="sel-pin-number">
+                <button class="minus-button">
+                    <span>-</span>
                 </button>
-            </a>
+        
+                <input min="0" max="15" name="quantity" value="10" type="number">
+        
+                <button class="plus-button">
+                    <span>+</span>
+                </button>
+            </div>
 
-            <button>
-                <span>Opciones</span>
-            </button>
+            <!-------------------------------------------------------------------Botones-->
+            <div class="buttons">
 
+                <button>
+                    <span>Controles</span>
+                </button>
+
+                <a href="../src/Bolotro.html">
+                    <button>
+                        <span>Jugar</span>
+                    </button>
+                </a>
+
+            </div>
         </div>
 
 
