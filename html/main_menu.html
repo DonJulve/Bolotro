@@ -15,16 +15,19 @@
         <div class="content">
             <!-------------------------------------------------------------------Seleccionar número de bolos-->
             <div class="sel-pin-number">
-                <button class="minus-button">
+                <button id="minus-button">
                     <span>-</span>
                 </button>
         
-                <input min="0" max="15" name="quantity" value="10" type="number">
+                <input min="1" max="15" id="pin-number" value="10" type="number">
+                
         
-                <button class="plus-button">
+                <button id="plus-button">
                     <span>+</span>
+                    
                 </button>
             </div>
+            <script src="src/pin_number.js"></script>
 
             <!-------------------------------------------------------------------Botones-->
             <div class="buttons">
