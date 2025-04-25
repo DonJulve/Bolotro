@@ -26,7 +26,7 @@ export class BowlingBall {
 
         // Propiedades fisicas
         this.mass = 10;
-        this.velocity = vec3(10, 0, 2);
+        this.velocity = vec3(0, 0, 0);
         this.position = vec3(x, y, z);
 
         this.velocityNextFrame = vec3(0,0,0);
@@ -48,6 +48,8 @@ export class BowlingBall {
     }
 
     reset() {
+        this.hasShot = false;
+
         this.position = vec3(
             this.initialPosition[0],
             this.initialPosition[1],
@@ -119,11 +121,15 @@ export class BowlingBall {
         const sceneObjects = this.scene.getObjectsToDraw();
 
         // Si no hay cambios las siguientes velocidades serán las de ahora
-        const GRAVITY = vec3(0, -20, 0)
-        let gravityEffect = multVectScalar(GRAVITY, dt); 
-        gravityEffect = vec3(gravityEffect[0], gravityEffect[1], gravityEffect[2]);
+        this.velocityNextFrame = this.velocity;
 
-        this.velocityNextFrame = add(this.velocity, gravityEffect); 
+        if (this.hasShot) {
+            const GRAVITY = vec3(0, -20, 0)
+            let gravityEffect = multVectScalar(GRAVITY, dt); 
+            gravityEffect = vec3(gravityEffect[0], gravityEffect[1], gravityEffect[2]);
+
+            this.velocityNextFrame = add(this.velocity, gravityEffect); 
+        }
         this.positionNextFrame = add(this.position, mult(dt, this.velocity));
         
         // - - - DETECCION DE COLISIONES - - - - 
@@ -132,7 +138,7 @@ export class BowlingBall {
             // No queremos comparar las colisiones con nosotros mismos
             if (object != this) {
                 if (checkCollision(this, object)) {
-                    console.log("COLISION!");
+                    //console.log("COLISION!");
                     
                     // Añadimos al vector de objetos que tratar el objeto con el que hemos colisionado.
                     collisions.push(object);
@@ -151,6 +157,17 @@ export class BowlingBall {
         this.position = this.positionNextFrame;
         this.#updatePosition();
     }
+
+    
+
+    shoot(shootForce) {
+       if (!this.hasShot) {
+            this.hasShot = true;
+            console.log("ORIENTACIÓN: " + this.orientation);
+            this.velocity = mult(shootForce, vec3(this.orientation[0],this.orientation[1],this.orientation[2]));
+        }
+    }
+
   }
   
 export class Pin {
