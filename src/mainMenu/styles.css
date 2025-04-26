@@ -1,9 +1,8 @@
 body {
-    /*text-align: center;*/
-    /*justify-content: center;*/
-    /*align-content: center;*/
+    text-align: center;
+    justify-content: center;
+    align-content: center;
 
-    /*Fondo*/
     background-image:
         linear-gradient(
             rgba(0, 0, 0, 0.5),
@@ -15,13 +14,10 @@ body {
     background-attachment: fixed;
 }
 
-/*----------------------------Titulo*/
 .mainTitle {
     font-size: 72;
     color:#00DDFF;
     font-family: fantasy;
-    margin-top: 15%;
-    text-align: center;
 }
 
 .mainTitle::before {
@@ -31,90 +27,15 @@ body {
     filter: blur(30px);
 }
 
-
-/*---------------------------------------------------------------------Seleccionar número de bolos*/
-
-/*-------------------------------------------------Quitar botones laterales*/
-/* Chrome, Safari, Edge, Opera */
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-/* Firefox */
-input[type=number] {
-  -moz-appearance: textfield;
-}
-
-
-.content {
-    margin: auto;
-    width: 500px;
-}
-
-
-/*-------------------------------------------------*/
-.sel-pin-number {
-    text-align:right;
-    margin-bottom: 10px; /*Separar del botón de abajo*/
-}
-
-.sel-pin-number input {
-    background-color: #111;
-    color: white;
-    border: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-/*Botones + y -*/
-.sel-pin-number button {
-    width: 30px;
-    height: 30px;
-    border: 0px;
-    padding: 0px;
-    background-image: linear-gradient(
-        150deg,
-        #9500ff,
-        #09f,
-        #00DDFF
-    );
-    border-radius: 8px;
-    color: #fff;
-    cursor: pointer;
-    transition: .3;
-
-    align-items: center;
-    justify-content: center;
-    align-content: center;
-}
-
-.sel-pin-number button span {
-    display: flex;
-    background-color: #111;
-    width: 90%;
-    height: 90%;
-    border-radius: 6px;
-    transition: .3s;
-
-    align-content: center;
-    align-items: center;
-    justify-content: center;
-    margin: auto;
-}
-
-/*---------------------------------------------------------------------Botones*/
 .buttons a {
     text-decoration: none;
 }
 
-.buttons button {
-    width: 100%;
+button {
+    width: 500px;
     height: 40px;
     margin: auto;
-    margin-bottom: 10px; /*Separar del botón de abajo*/
+    margin-bottom: 10px; 
     border: 0;
     background-image: linear-gradient(
         150deg,
@@ -130,9 +51,9 @@ input[type=number] {
 }
 
 
-.buttons button span {
+button span {
     background-color: #111;
-    width: 99%;
+    width: 495px;
     height: 35px;
     margin: auto;
     border-radius: 6px;

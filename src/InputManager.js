@@ -1,5 +1,4 @@
 import { Camera } from "./Camera.js";
-import { ForceBar } from "./ForceBar.js";
 
 export class InputManager {
     constructor() {
@@ -7,45 +6,40 @@ export class InputManager {
         this.keysPressed = new Set(); 
         this.camera = new Camera();
         this.bowlingBall = null;
-        this.forceBar = null;
         // TODO
     }
     // ----------------------------
     // Funciones Privadas
     // ----------------------------
     #leftKeyHandler(estado) {
-        if (!this.bowlingBall.hasShot) {
-            if (estado == "PRESIONADA") {
-                if (this.keysPressed.has("Shift")){
-                    this.camera.rotateCamera(false);
-                    this.bowlingBall.rotateWithCamera(this.camera, false, this.camera.constructor.ROTATE_STEP, this.camera.constructor.MAX_ROTATION);
-                }
-                else {
-                    this.camera.moveCamera(false);
-                    this.bowlingBall.moveWithCamera(this.camera, false, this.camera.constructor.MOVE_STEP, this.camera.constructor.MAX_HORIZONTAL);
-                }
+        if (estado == "PRESIONADA") {
+            if (this.keysPressed.has("Shift")){
+                this.camera.rotateCamera(false);
+                this.bowlingBall.rotateWithCamera(this.camera, false, this.camera.constructor.ROTATE_STEP, this.camera.constructor.MAX_ROTATION);
             }
-            else if (estado == "SOLTADA") {
-                // TODO
+            else {
+                this.camera.moveCamera(false);
+                this.bowlingBall.moveWithCamera(this.camera, false, this.camera.constructor.MOVE_STEP, this.camera.constructor.MAX_HORIZONTAL);
             }
+        }
+        else if (estado == "SOLTADA") {
+            // TODO
         }
     }
 
     #rightKeyHandler(estado) {
-        if (!this.bowlingBall.hasShot) {
-            if (estado == "PRESIONADA") {
-                if (this.keysPressed.has("Shift")){
-                    this.camera.rotateCamera(true);
-                    this.bowlingBall.rotateWithCamera(this.camera, true, this.camera.constructor.ROTATE_STEP, this.camera.constructor.MAX_ROTATION);
-                }
-                else {
-                    this.camera.moveCamera(true);
-                    this.bowlingBall.moveWithCamera(this.camera, true, this.camera.constructor.MOVE_STEP, this.camera.constructor.MAX_HORIZONTAL);
-                }
+        if (estado == "PRESIONADA") {
+            if (this.keysPressed.has("Shift")){
+                this.camera.rotateCamera(true);
+                this.bowlingBall.rotateWithCamera(this.camera, true, this.camera.constructor.ROTATE_STEP, this.camera.constructor.MAX_ROTATION);
             }
-            else if (estado == "SOLTADA") {
-                // TODO
+            else {
+                this.camera.moveCamera(true);
+                this.bowlingBall.moveWithCamera(this.camera, true, this.camera.constructor.MOVE_STEP, this.camera.constructor.MAX_HORIZONTAL);
             }
+        }
+        else if (estado == "SOLTADA") {
+            // TODO
         }
     }
 
@@ -70,11 +64,10 @@ export class InputManager {
 
     #spaceKeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            this.forceBar.loadShot(this.bowlingBall);
+            // TODO
         }
         else if (estado == "SOLTADA") {
-            let shotForce = this.forceBar.shoot();
-            this.bowlingBall.shoot(shotForce);
+            // TODO
         }
     }
 
@@ -145,6 +138,5 @@ export class InputManager {
     // Para obtener la instancia de la bola
     setBowlingBall(bowlingBall){
         this.bowlingBall = bowlingBall;
-        this.forceBar = new ForceBar(bowlingBall);
     }
 }

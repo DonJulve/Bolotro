@@ -18,7 +18,6 @@ export class SceneManager {
         }
 
         this.objects = [];
-        this.bowlingBall = null;
 
         SceneManager.instance = this;
     }
@@ -29,7 +28,7 @@ export class SceneManager {
 
         // Instanciacion de los objetos
         var plano = new Plano();
-        this.bowlingBall = new BowlingBall(-5, 1, 0);
+        var bowlingBall = new BowlingBall(-5, 1, 0);
         var pin = new Pin(2, 1.5, 1.5);
         var pin2 = new Pin(0, 1.5, 0);
 
@@ -39,7 +38,7 @@ export class SceneManager {
         var cubeProgramInfo = webGLManager.getProgramInfoTemplate("CUBE");
         var planoProgramInfo = webGLManager.getProgramInfoTemplate("PLANE");
 
-        this.bowlingBall.setProgramInfo(sphereProgramInfo);
+        bowlingBall.setProgramInfo(sphereProgramInfo);
         pin.setProgramInfo(cubeProgramInfo);
         pin2.setProgramInfo(cubeProgramInfo);
         plano.setProgramInfo(planoProgramInfo);
@@ -49,14 +48,14 @@ export class SceneManager {
 
         this.objects.push(pin);
         this.objects.push(pin2);
-        this.objects.push(this.bowlingBall);
+        this.objects.push(bowlingBall);
         this.objects.push(plano);
 
         webGLManager.setPrimitives(this.objects);
     }
 
     update(dt) {
-        //console.log("Updating scene");
+        console.log("Updating scene");
 
         // Calculamos el siguiente frame para todos los objetos
         for (let object of this.objects) {
