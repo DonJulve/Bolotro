@@ -25,7 +25,6 @@ export class ForceBar {
 
             //Actualizar la barra de fuerza
             let forcePercentage = (this.shootForce / this.maxShootForce) * 100;
-            console.log("Porcentaje: " + forcePercentage);
             this.forceBar.style.width = forcePercentage + "%";
 
             //Calcular el color basado en el porcentaje (verde -> amarillo -> rojo)
