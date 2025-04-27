@@ -283,6 +283,7 @@ function resolvePinPlano(dt, pin, plane) {
                 );
             
                 pin.rotationMatrix = newRotation;
+                pin.hasFallen = true;
             }
             else {
                 pin.rotationMatrix = mat4();

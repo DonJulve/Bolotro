@@ -54,7 +54,7 @@ export class SceneManager {
 
         // Instanciacion de los objetos
         var plano = new Plano();
-        var bowlingBall = new BowlingBall(-30, 1, 0.6);
+        var bowlingBall = new BowlingBall(-30, 1, 0);
         // Para q el inputmanager pueda usarna
         this.bowlingBall = bowlingBall; 
 
@@ -79,7 +79,14 @@ export class SceneManager {
 
     removeFalledPins() {
         this.objects = this.objects.filter(object => {
-            return !(object.constructor.name == "Pin" && object.hasHitBall);
+            if (object.constructor.name == "Pin") {
+                object.hasHitBall = false;
+                object.hasHitPin = false;
+                return !object.hasFallen
+            }
+            else {
+                return true;
+            }
         });
     }
 
@@ -99,6 +106,15 @@ export class SceneManager {
         
     }
 
+    getNumberOfPins() {
+        let sum = 0;
+        for (let object of this.objects) {
+            if (object.constructor.name == "Pin" ) {
+                sum++;
+            }
+        }
+        return sum;
+    }
 
     getObjectsToDraw() {
         return this.objects

@@ -198,6 +198,7 @@ export class Pin {
         this.height = 3;
         this.hasHitBall = false;
         this.hasHitPin = false;
+        this.hasFallen = false;
         
         // Propiedades del sistema de colisiones 
         this.pointOfCollision = null;
