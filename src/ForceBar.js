@@ -1,51 +1,65 @@
 export class ForceBar {
-    static MAX_FORCE = 100.0;
+    static MAX_VISUAL = 100.0;   // Máximo visual (100%)
+    static MAX_FORCE = 70.0;     // Máximo real de fuerza aplicable
+    static MIN_FORCE = 10.0;     // Mínimo de fuerza (debajo de este valor no se dispara)
+    static EXPONENT = 3.0;       // Curva más pronunciada
+    static DEAD_ZONE = 0.15;     // Zona inicial que no genera fuerza significativa
 
     static instance;
     constructor() {
-        // Singleton 
         if (ForceBar.instance) {
             return ForceBar.instance;
         }
 
         this.forceBarElement = document.getElementById("force-bar");
-        this.shootStep = 2.5; //Incremento de la fuerza de lanzamiento
-        this.shootForce = 0;
-        this.shootForceDirection = 1; //Dirección de crecimiento de la barra de fuerza (1 para subir, -1 para bajar)
-
+        this.shootStep = 2.0;    // Velocidad de carga
+        this.rawForce = 0;       // Valor lineal interno
+        this.shootForceDirection = 1;
     }
 
     loadShot() {
-        this.shootForce += this.shootStep * this.shootForceDirection;
+        this.rawForce += this.shootStep * this.shootForceDirection;
 
-        //Cambia la dirección cuando llega a los límites
-        if (this.shootForce >= ForceBar.MAX_FORCE) {
+        // Control de límites
+        if (this.rawForce >= ForceBar.MAX_VISUAL) {
             this.shootForceDirection = -1;
-            this.shootForce = ForceBar.MAX_FORCE;
-        }
-        else if (this.shootForce <= 0) {
+            this.rawForce = ForceBar.MAX_VISUAL;
+        } else if (this.rawForce <= 0) {
             this.shootForceDirection = 1;
-            this.shootForce = 0;
+            this.rawForce = 0;
         }
 
-        //Actualizar la barra de fuerza
-        let forcePercentage = (this.shootForce / ForceBar.MAX_FORCE) * 100;
-        this.forceBarElement.style.width = forcePercentage + "%";
+        // Actualización visual (lineal)
+        this.forceBarElement.style.width = (this.rawForce / ForceBar.MAX_VISUAL * 100) + "%";
 
-        //Calcular el color basado en el porcentaje (verde -> amarillo -> rojo)
-        let hue = (1 - (forcePercentage / 100)) * 120; // 0 (verde) a 120 (rojo)
+        // Cálculo de color con énfasis en zona alta
+        const visualProgress = this.rawForce / ForceBar.MAX_VISUAL;
+        let hue = 120 * (1 - Math.pow(visualProgress, 0.5)); // Rojo aparece más rápido
         this.forceBarElement.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
     }
 
     shoot() {
-        let result = this.shootForce;
-        this.shootForce = 0;
-        return result
+        const normalized = this.rawForce / ForceBar.MAX_VISUAL;
+        
+
+        let effectiveForce = 0;
+        
+        if (normalized > ForceBar.DEAD_ZONE) {
+            const remapped = (normalized - ForceBar.DEAD_ZONE) / (1 - ForceBar.DEAD_ZONE);
+            effectiveForce = ForceBar.MAX_FORCE * Math.pow(remapped, ForceBar.EXPONENT);
+        }
+        
+        // Resetear valores
+        this.rawForce = 0;
+        this.forceBarElement.style.width = "0%";
+        
+        // Aseguramos que esté entre MIN y MAX
+        return Math.max(ForceBar.MIN_FORCE, Math.min(ForceBar.MAX_FORCE, effectiveForce));
     }
 
-    
     reset() {
+        this.rawForce = 0;
         this.forceBarElement.style.width = "0%";
-        this.forceBarElement.style.backgroundColor = `hsl(120%, 100%, 50%)`;
+        this.forceBarElement.style.backgroundColor = "hsl(120, 100%, 50%)";
     }
 }

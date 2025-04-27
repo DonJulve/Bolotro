@@ -60,6 +60,7 @@ export class InputManager {
 
     #R_KeyHandler(estado) {
         if (estado == "PRESIONADA") {
+            this.sceneManager.registerThrow();
             this.camera.reset();
             this.bowlingBall.reset();
             this.sceneManager.removeFalledPins();

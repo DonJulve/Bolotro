@@ -1,5 +1,6 @@
 import { BowlingBall, Plano, Pin } from "./Objects.js";
 import { WebGLManager } from "./WebGLManager.js";
+import { ScoreManager } from "./ScoreManager.js";
 
 export class SceneManager {
     // ----------------------------
@@ -19,6 +20,10 @@ export class SceneManager {
 
         this.objects = [];
         this.bowlingBall = null;
+        this.scoreManager = new ScoreManager();
+        this.firstThrowPins = 0;
+        this.secondThrowPins = 0;
+        this.isFirstThrow = true;
 
         SceneManager.instance = this;
     }
@@ -100,6 +105,89 @@ export class SceneManager {
         });
     }
 
+    registerThrow() {
+        const fallenPins = this.countFallenPins();
+        let shouldResetPins = false;
+        
+        if (this.isFirstThrow) {
+            this.firstThrowPins = fallenPins;
+            this.scoreManager.addThrow(this.firstThrowPins);
+            this.isFirstThrow = false;
+            
+            // Si fue strike, pasa al siguiente turno y resetea pines
+            if (this.firstThrowPins === 10) {
+                shouldResetPins = true;
+                this.isFirstThrow = true;
+                this.firstThrowPins = 0;
+                this.secondThrowPins = 0;
+            }
+        } else {
+            this.secondThrowPins = fallenPins;
+            this.scoreManager.addThrow(this.secondThrowPins);
+            shouldResetPins = true; // Siempre resetear después del segundo tiro
+            this.isFirstThrow = true;
+            this.firstThrowPins = 0;
+            this.secondThrowPins = 0;
+        }
+        
+        this.updateScoreTable();
+        
+        if (shouldResetPins) {
+            this.resetPins();
+        }
+    }
+
+
+    updateScoreTable() {
+        const throwsRow = document.getElementById('throws-row');
+        const totalRow = document.getElementById('total-row');
+    
+        throwsRow.innerHTML = '';
+        totalRow.innerHTML = '';
+    
+        const scoreTable = this.scoreManager.getScoreTable();
+    
+        scoreTable.forEach((round, index) => {
+            throwsRow.innerHTML += `
+                <td>${round.first}</td>
+                <td>${round.second}</td>
+                <td></td>
+            `;
+            totalRow.innerHTML += `<td colspan="3">${round.total}</td>`;
+        });
+    }
+
+    resetPins() {
+        const webGLManager = new WebGLManager();
+        const cubeProgramInfo = webGLManager.getProgramInfoTemplate("CUBE");
+    
+        // Eliminar todos los pines existentes
+        this.objects = this.objects.filter(object => {
+            if (object.constructor.name === "Pin") {
+                // Limpiar buffers gráficos del pin
+                if (object.cleanup) object.cleanup(); 
+                return false;
+            }
+            return true;
+        });
+    
+        this.createPins();
+    
+        // Asegurar que los nuevos pines tienen su programInfo configurado
+        this.objects.forEach(object => {
+            if (object.constructor.name === "Pin") {
+                object.setProgramInfo(cubeProgramInfo);
+            }
+        });
+    
+        // Resetear la bola
+        if (this.bowlingBall) {
+            this.bowlingBall.reset();
+        }
+    
+        webGLManager.setPrimitives(this.objects);
+    }
+
     update(dt) {
         console.log("Updating scene");
 
@@ -124,6 +212,16 @@ export class SceneManager {
             }
         }
         return sum;
+    }
+
+    countFallenPins() {
+      let fallenPins = 0;
+      for (let object of this.objects) {
+          if (object.constructor.name === "Pin" && object.hasFallen) {
+              fallenPins++;
+          }
+      }
+      return fallenPins;
     }
 
     getObjectsToDraw() {

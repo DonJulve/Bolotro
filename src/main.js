@@ -2,6 +2,7 @@ import { ForceBar } from "./ForceBar.js";
 import { InputManager } from "./InputManager.js";
 import { SceneManager } from "./SceneManager.js";
 import { WebGLManager } from "./WebGLManager.js";
+import { MassManager } from "./MassManager.js";
 
 const inputManager = new InputManager();
 const sceneManager = new SceneManager();
@@ -11,8 +12,11 @@ const forceBar = new ForceBar();
 window.onload = function init() {
     sceneManager.setupScene();
     
-    inputManager.setBowlingBall(sceneManager.getBowlingBall());
+    const bowlingBall = sceneManager.getBowlingBall();
+    inputManager.setBowlingBall(bowlingBall);
     inputManager.start();
+    
+    new MassManager(bowlingBall);
     
     webgl.init(45.0);
     webgl.start();

@@ -12,11 +12,46 @@
 	</canvas>
 
   <div id="force-container" style="position: absolute; bottom: 20px; left: 20px; background-color: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; color: white; font-family: Arial, sans-serif;">
-      <div style="margin-bottom: 5px;">Fuerza de lanzamiento:</div>
-      <div style="width: 200px; height: 20px; background-color: #333; border-radius: 10px; overflow: hidden;">
-          <div id="force-bar" style="height: 100%; width: 0%; transition: width 0.1s;"></div>
-      </div>
+    <div style="margin-bottom: 5px;">Fuerza de lanzamiento:</div>
+    <div style="width: 200px; height: 20px; background-color: #333; border-radius: 10px; overflow: hidden;">
+        <div id="force-bar" style="height: 100%; width: 0%; transition: width 0.1s;"></div>
+    </div>
+    <div style="display: flex; align-items: center; margin-top: 10px;">
+        <div style="margin-right: 10px;">Masa de la bola:</div>
+        <button id="mass-decrease" style="background-color: #555; color: white; border: none; border-radius: 3px; width: 25px; height: 25px; cursor: pointer;">-</button>
+        <div id="mass-value" style="margin: 0 10px; width: 20px; text-align: center;">3</div>
+        <button id="mass-increase" style="background-color: #555; color: white; border: none; border-radius: 3px; width: 25px; height: 25px; cursor: pointer;">+</button>
+    </div>
   </div>
+
+  <div id="score-container" style="position: absolute; top: 20px; right: 20px; background-color: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; color: white; font-family: Arial, sans-serif; width: 500px;">
+    <h3 style="margin-top: 0; margin-bottom: 10px; text-align: center;">Tabla de puntos</h3>
+    <table id="score-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+        <thead>
+            <tr id="rounds-header">
+                <td colspan="3">1</td>
+                <td colspan="3">2</td>
+                <td colspan="3">3</td>
+                <td colspan="3">4</td>
+                <td colspan="3">5</td>
+                <td colspan="3">6</td>
+                <td colspan="3">7</td>
+                <td colspan="3">8</td>
+                <td colspan="3">9</td>
+                <td colspan="3">10</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="throws-row">
+                <!-- Se llenará dinámicamente -->
+            </tr>
+            <tr id="total-row">
+                <!-- Se llenará dinámicamente -->
+            </tr>
+        </tbody>
+    </table>
+  </div>
+
 	<!-- Vertex shader -->
 	<script id="plane-vertex-shader" type="x-shader/x-vertex">
 		attribute vec3 vPosition;

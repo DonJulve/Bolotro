@@ -264,6 +264,13 @@ export class Pin {
         this.position = this.positionNextFrame;
         this.#updatePosition();
     }
+
+    cleanup() {
+        // Limpiar los buffers WebGL
+        if (this.vertexBuffer) {
+            this.gl.deleteBuffer(this.vertexBuffer);
+        }
+    }
 }
 
 export class Plano {
