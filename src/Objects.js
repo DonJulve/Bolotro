@@ -20,13 +20,13 @@ export class BowlingBall {
     
         this.pointsArray = pointsSphere;
         this.uniforms = {
-          u_color: [1.0, 1.0, 1.0, 1.0],  // Color de la bola
+          u_color: [0.0, 1.0, 1.0, 0.3],  // Color de la bola
           u_model: new mat4(),      // Matriz de modelo (posición y transformación)
         };
         this.primType = "triangles";
 
         // Propiedades fisicas
-        this.mass = 5;
+        this.mass = 3;
         this.velocity = vec3(10, 0, 0);
         this.position = vec3(x, y, z);
 
@@ -54,6 +54,7 @@ export class BowlingBall {
     }
 
     reset() {
+        this.start = false;
         this.position = vec3(
             this.initialPosition[0],
             this.initialPosition[1],
@@ -174,7 +175,7 @@ export class Pin {
         this.scene = new SceneManager();
         this.pointsArray = pointsCube;
         this.uniforms = {
-			u_color: [1.0, 0.0, 0.0, 1.0],
+			u_color: [0.3, 0.3, 0.3, 0.3],
 			u_model: new mat4(),
 		};
 		this.primType = "triangles";
@@ -268,7 +269,7 @@ export class Plano {
     constructor() {
         this.pointsArray = pointsPlane;
         this.uniforms = {
-			u_color: [0.0, 1.0, 0.0, 0.5],
+			u_color: [0.502, 0.251, 0.0, 0.75],
 			u_model: new mat4(),
 		};
 		this.primType = "triangles";   

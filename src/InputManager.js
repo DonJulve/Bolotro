@@ -60,6 +60,7 @@ export class InputManager {
         if (estado == "PRESIONADA") {
             this.camera.reset();
             this.bowlingBall.reset();
+            this.sceneManager.removeFalledPins();
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -69,12 +70,14 @@ export class InputManager {
     #spaceKeyHandler(estado) {
         if (estado == "PRESIONADA") {
             // TODO HACER LO DE LA 
-            const potencia = 10;
+            const potencia = 100;
             const anguloTiroRadianes = (90 - this.camera.rotationAngle ) * (Math.PI / 180);
             const x = potencia * Math.sin(anguloTiroRadianes);
             const z = potencia * Math.cos(anguloTiroRadianes);
             this.bowlingBall.velocity = vec3(x, 0, z);
             this.bowlingBall.start = true;
+
+            this.camera.eye = vec3(-30.0, 10.0, 10.0)
             
         }
         else if (estado == "SOLTADA") {

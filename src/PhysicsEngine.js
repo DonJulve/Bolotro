@@ -225,7 +225,7 @@ function resolvePinBall (dt, pin, ball) {
 }
 
 function resolveBallPlano(dt, ball, plano) {
-    ball.velocityNextFrame = vec3(ball.velocity[0], ball.velocity[1]*-0.8, ball.velocity[2]);
+    ball.velocityNextFrame = vec3(ball.velocity[0], ball.velocity[1]*-0.4, ball.velocity[2]);
     ball.positionNextFrame = add(ball.position, mult(dt, ball.velocityNextFrame));
 }
 

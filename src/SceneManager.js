@@ -77,6 +77,12 @@ export class SceneManager {
         webGLManager.setPrimitives(this.objects);
     }
 
+    removeFalledPins() {
+        this.objects = this.objects.filter(object => {
+            return !(object.constructor.name == "Pin" && object.hasHitBall);
+        });
+    }
+
     update(dt) {
         console.log("Updating scene");
 
