@@ -18,15 +18,16 @@ export class SceneManager {
         }
 
         this.objects = [];
+        this.bowlingBall = null;
 
         SceneManager.instance = this;
     }
     createPins() {
 
         var webGLManager = new WebGLManager(); 
-        const spacing = 3; // Separación entre pines (ajústalo como quieras)
+        const spacing = 2.5; // Separación entre pines (ajústalo como quieras)
         let startX = 0; 
-        let startZ = 0; // Primer bolo en (0, 0)
+        let startZ = 5; // Primer bolo en (0, 0)
         let count = 0; 
         var cubeProgramInfo = webGLManager.getProgramInfoTemplate("CUBE");
 
@@ -53,7 +54,9 @@ export class SceneManager {
 
         // Instanciacion de los objetos
         var plano = new Plano();
-        var bowlingBall = new BowlingBall(-5, 1, -1.2);
+        var bowlingBall = new BowlingBall(-30, 1, 0.6);
+        // Para q el inputmanager pueda usarna
+        this.bowlingBall = bowlingBall; 
 
         this.createPins();
 

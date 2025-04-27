@@ -1,10 +1,14 @@
 import { Camera } from "./Camera.js";
+import { BowlingBall } from "./Objects.js";
+import { SceneManager } from "./SceneManager.js";
 
 export class InputManager {
     constructor() {
         // Conjunto para ver que teclas están presionadas
         this.keysPressed = new Set(); 
         this.camera = new Camera();
+
+        this.sceneManager = new SceneManager();
         this.bowlingBall = null;
         // TODO
     }
@@ -64,7 +68,14 @@ export class InputManager {
 
     #spaceKeyHandler(estado) {
         if (estado == "PRESIONADA") {
-            // TODO
+            // TODO HACER LO DE LA 
+            const potencia = 10;
+            const anguloTiroRadianes = (90 - this.camera.rotationAngle ) * (Math.PI / 180);
+            const x = potencia * Math.sin(anguloTiroRadianes);
+            const z = potencia * Math.cos(anguloTiroRadianes);
+            this.bowlingBall.velocity = vec3(x, 0, z);
+            this.bowlingBall.start = true;
+            
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -126,6 +137,7 @@ export class InputManager {
     // Funciones Publicas
     // ----------------------------
     start() {
+        this.bowlingBall = this.sceneManager.bowlingBall
         window.addEventListener("keydown", this.#onKeyDown.bind(this));
         window.addEventListener("keyup", this.#onKeyUp.bind(this));
     }

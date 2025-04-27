@@ -2004,12 +2004,12 @@ for (let i=0; i < sphereIndices.length; i++)
 }
 
 export const pointsPlane = [];
-pointsPlane.push([-20.0, -10.0, 0.0, 1.0]);
-pointsPlane.push([ 20.0, -10.0, 0.0, 1.0]);
-pointsPlane.push([-20.0,  10.0, 0.0, 1.0]);
-pointsPlane.push([-20.0,  10.0, 0.0, 1.0]); 
-pointsPlane.push([ 20.0,  10.0, 0.0, 1.0]); 
-pointsPlane.push([ 20.0, -10.0, 0.0, 1.0]);
+pointsPlane.push([-30.0, -10.0, 0.0, 1.0]);
+pointsPlane.push([ 30.0, -10.0, 0.0, 1.0]);
+pointsPlane.push([-30.0,  10.0, 0.0, 1.0]);
+pointsPlane.push([-30.0,  10.0, 0.0, 1.0]); 
+pointsPlane.push([ 30.0,  10.0, 0.0, 1.0]); 
+pointsPlane.push([ 30.0, -10.0, 0.0, 1.0]);
 	
 const red =			[1.0, 0.0, 0.0, 1.0];
 const green =		[0.0, 1.0, 0.0, 1.0];

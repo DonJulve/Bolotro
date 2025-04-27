@@ -27,6 +27,7 @@ function checkBoundingBoxes(a, b) {
 
     if (overlapX && overlapY && overlapZ) {
         b.hasHitPin = true;
+        a.hasHitPin = true;
         return true
     }
     return false
@@ -203,6 +204,7 @@ function resolveAngularMomentum(dt, obj1, obj2) {
 
 // Actualiza pin1 sabiendo que ha chocado con pin2
 function resolvePinPin(dt, pin1, pin2) {
+    if (pin1.hasHitPin === true) return;
     resolveLinearMomentum(dt, pin1, pin2);
     resolveAngularMomentum(dt, pin1, pin2);
 }
@@ -252,32 +254,39 @@ function resolvePinPlano(dt, pin, plane) {
         pin.angularVelocity = scale(pin.angularVelocity, 0.8);
         if (pin.angularVelocity[0] * pin.angularVelocity[1] * pin.angularVelocity[2] < 0.3 && (pin.hasHitBall || pin.hasHitPin)) {
             pin.angularVelocity = vec3(0, 0, 0)
-            const rotation = pin.rotationMatrix;
+            const upVector = vec3(pin.rotationMatrix[4], pin.rotationMatrix[5], pin.rotationMatrix[6]); // Segunda columna de matriz
+            const verticalAlignment = dot(upVector, vec3(0, 1, 0)); // 1 si está de pie, 0 si está tumbado
+            if (verticalAlignment < 0.85) {
+                const rotation = pin.rotationMatrix;
 
-            // Extraer los ejes locales del pin
-            const right = normalize(vec3(rotation[0], rotation[1], rotation[2])); // X local
-            const up = normalize(vec3(rotation[4], rotation[5], rotation[6]));     // Y local
-            const forward = normalize(vec3(rotation[8], rotation[9], rotation[10])); // Z local
-        
-            // Nuevo 'up' es uno de los ejes X o Z, dependiendo de qué esté más cerca
-            // Queremos que 'up' esté tumbado sobre el plano XZ
-        
-            let newUp;
-            newUp = normalize(vec3(Math.sign(up[0]), 0, Math.sign(up[2])));
-        
-            // Ajustamos los otros dos vectores para que sigan siendo ortogonales
-            const newForward = normalize(cross(newUp, right));
-            const newRight = normalize(cross(newForward, newUp));
-        
-            // Construimos la nueva matriz de rotación
-            const newRotation = mat4(
-                newRight[0], newRight[1], newRight[2], 0,
-                newUp[0],   newUp[1],   newUp[2],   0,
-                newForward[0], newForward[1], newForward[2], 0,
-                0, 0, 0, 1
-            );
-        
-            pin.rotationMatrix = newRotation;
+                // Extraer los ejes locales del pin
+                const right = normalize(vec3(rotation[0], rotation[1], rotation[2])); // X local
+                const up = normalize(vec3(rotation[4], rotation[5], rotation[6]));     // Y local
+                const forward = normalize(vec3(rotation[8], rotation[9], rotation[10])); // Z local
+            
+                // Nuevo 'up' es uno de los ejes X o Z, dependiendo de qué esté más cerca
+                // Queremos que 'up' esté tumbado sobre el plano XZ
+            
+                let newUp;
+                newUp = normalize(vec3(Math.sign(up[0]), 0, Math.sign(up[2])));
+            
+                // Ajustamos los otros dos vectores para que sigan siendo ortogonales
+                const newForward = normalize(cross(newUp, right));
+                const newRight = normalize(cross(newForward, newUp));
+            
+                // Construimos la nueva matriz de rotación
+                const newRotation = mat4(
+                    newRight[0], newRight[1], newRight[2], 0,
+                    newUp[0],   newUp[1],   newUp[2],   0,
+                    newForward[0], newForward[1], newForward[2], 0,
+                    0, 0, 0, 1
+                );
+            
+                pin.rotationMatrix = newRotation;
+            }
+            else {
+                pin.rotationMatrix = mat4();
+            }
         }
     }
 }

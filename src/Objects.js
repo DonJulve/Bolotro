@@ -8,6 +8,7 @@ export class BowlingBall {
         this.scene = new SceneManager();
 
         // Para control de la camara
+        this.start = false;
         this.orientation = mat4();
         this.currentRotationAngle = 0;
         this.currentHorizontalOffset = 0;
@@ -26,7 +27,7 @@ export class BowlingBall {
 
         // Propiedades fisicas
         this.mass = 5;
-        this.velocity = vec3(15, 0, 0);
+        this.velocity = vec3(10, 0, 0);
         this.position = vec3(x, y, z);
 
         this.velocityNextFrame = vec3(0,0,0);
@@ -38,6 +39,7 @@ export class BowlingBall {
         // Propiedad para evitar bugs de colisones infinitas
         // Un bolo colisiona como máximo una vex con un pin
         this.collisionedPins = [];
+
 
         this.#updatePosition();
     }
@@ -71,6 +73,7 @@ export class BowlingBall {
     // Mueve la bola junto con la cámara
     moveWithCamera(camera, direction, moveStep, limit) {
         // Verificar límites de movimiento
+        if (this.start === true) return;
         if (this.currentHorizontalOffset > limit && direction) return;
         if (this.currentHorizontalOffset < -limit && !direction) return;
 
@@ -90,6 +93,7 @@ export class BowlingBall {
     // Rota la bola junto con la cámara
     rotateWithCamera(camera, direction, rotateStep, limit) {
         // Verificar límites de rotación
+        if (this.start === true) return;
         const newRotationAngle = direction ? 
             this.currentRotationAngle + rotateStep : 
             this.currentRotationAngle - rotateStep;
@@ -120,6 +124,9 @@ export class BowlingBall {
 
 
     calculateNextFrame(dt) {
+        if (this.start === false) {
+            return;
+        }
         const sceneObjects = this.scene.getObjectsToDraw();
 
         // Si no hay cambios las siguientes velocidades serán las de ahora
@@ -153,6 +160,9 @@ export class BowlingBall {
     }
 
     applyNextFrame() {
+        if (this.start === false) {
+            return;
+        }
         this.velocity = this.velocityNextFrame;
         this.position = this.positionNextFrame;
         this.#updatePosition();
