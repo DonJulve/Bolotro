@@ -84,7 +84,7 @@ export class InputManager {
             this.bowlingBall.velocity = vec3(x, 0, z);
             this.bowlingBall.start = true;
 
-            //this.camera.eye = vec3(-30.0, 10.0, 10.0)
+            this.camera.eye = vec3(-30.0, 10.0, 10.0)
         }
     }
 

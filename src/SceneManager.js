@@ -23,9 +23,19 @@ export class SceneManager {
         SceneManager.instance = this;
     }
     createPins() {
-
         var webGLManager = new WebGLManager(); 
-        const spacing = 2.5; // Separación entre pines (ajústalo como quieras)
+        
+        //Borra todos los pines antes de añadir los nuevos
+        this.objects = this.objects.filter(object => {
+            if (object.constructor.name == "Pin") {
+                return false;
+            }
+            else {
+                return true;
+            }
+        });
+
+        const spacing = 2; // Separación entre pines (ajústalo como quieras)
         let startX = 0; 
         let startZ = 5; // Primer bolo en (0, 0)
         let count = 0; 
