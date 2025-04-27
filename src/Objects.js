@@ -25,8 +25,8 @@ export class BowlingBall {
         this.primType = "triangles";
 
         // Propiedades fisicas
-        this.mass = 10;
-        this.velocity = vec3(10, 0, 2);
+        this.mass = 5;
+        this.velocity = vec3(15, 0, 0);
         this.position = vec3(x, y, z);
 
         this.velocityNextFrame = vec3(0,0,0);
@@ -34,6 +34,10 @@ export class BowlingBall {
 
         // Propiedades exclusivas de la bola
         this.radius = 0.5
+
+        // Propiedad para evitar bugs de colisones infinitas
+        // Un bolo colisiona como máximo una vex con un pin
+        this.collisionedPins = [];
 
         this.#updatePosition();
     }
@@ -130,10 +134,12 @@ export class BowlingBall {
         let collisions = [];
         for(let object of sceneObjects) {
             // No queremos comparar las colisiones con nosotros mismos
-            if (object != this) {
+            if (object != this && !this.collisionedPins.includes(object) ) {
                 if (checkCollision(this, object)) {
                     console.log("COLISION!");
-                    
+                    if (object.constructor.name == "Pin") {
+                        this.collisionedPins.push(object);
+                    }
                     // Añadimos al vector de objetos que tratar el objeto con el que hemos colisionado.
                     collisions.push(object);
                 }
@@ -164,7 +170,7 @@ export class Pin {
 		this.primType = "triangles";
 
         // Propiedades fisicas
-        this.mass = 1;
+        this.mass = 2;
         
         this.velocity = vec3(0, 0, 0);
         this.position = vec3(x, y, z);
@@ -179,8 +185,11 @@ export class Pin {
         this.width = 1;
         this.depth = 1
         this.height = 3;
-
+        this.hasHitBall = false;
+        this.hasHitPin = false;
         
+        // Propiedades del sistema de colisiones 
+        this.pointOfCollision = null;
         this.#updatePosition();    
     }
 
@@ -200,7 +209,7 @@ export class Pin {
         const sceneObjects = this.scene.getObjectsToDraw();
 
         // Si no hay cambios las siguientes velocidades serán las de ahora
-        const GRAVITY = vec3(0, -9.81, 0)
+        const GRAVITY = vec3(0, -15, 0)
         let gravityEffect = multVectScalar(GRAVITY, dt); 
         gravityEffect = vec3(gravityEffect[0], gravityEffect[1], gravityEffect[2]);
 

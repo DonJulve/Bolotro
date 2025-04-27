@@ -21,6 +21,31 @@ export class SceneManager {
 
         SceneManager.instance = this;
     }
+    createPins() {
+
+        var webGLManager = new WebGLManager(); 
+        const spacing = 3; // Separación entre pines (ajústalo como quieras)
+        let startX = 0; 
+        let startZ = 0; // Primer bolo en (0, 0)
+        let count = 0; 
+        var cubeProgramInfo = webGLManager.getProgramInfoTemplate("CUBE");
+
+        for (let row = 1; row <= 4; row++) { // 4 filas
+            const offsetX = -(row - 1) * (spacing / 2); // Centrar cada fila respecto al anterior
+            for (let i = 0; i < row; i++) {
+                const x = startX + offsetX + i * spacing;
+                const y = 1.5; // Altura inicial (puedes ajustar)
+                const z = startZ + (row - 1) * spacing; // Cada fila un poco más lejos
+                
+                const pin = new Pin(z, y, x);
+                pin.setProgramInfo(cubeProgramInfo);
+                this.objects.push(pin);
+                count++;
+                if (count >= 10) break; // Solo crear 10 bolos
+            }
+            if (count >= 10) break;
+        }
+    }
 
     setupScene() {
         // Es un singleton da igual si lo creo de nuevo, me devuelve la unica instancia
@@ -28,28 +53,23 @@ export class SceneManager {
 
         // Instanciacion de los objetos
         var plano = new Plano();
-        var bowlingBall = new BowlingBall(-5, 1, 0);
-        var pin = new Pin(2, 1.5, 1.5);
-        var pin2 = new Pin(0, 1.5, 0);
+        var bowlingBall = new BowlingBall(-5, 1, -1.2);
 
+        this.createPins();
 
         // Configuracion de los objetos
         var sphereProgramInfo = webGLManager.getProgramInfoTemplate("SPHERE");
-        var cubeProgramInfo = webGLManager.getProgramInfoTemplate("CUBE");
+
         var planoProgramInfo = webGLManager.getProgramInfoTemplate("PLANE");
 
         bowlingBall.setProgramInfo(sphereProgramInfo);
-        pin.setProgramInfo(cubeProgramInfo);
-        pin2.setProgramInfo(cubeProgramInfo);
         plano.setProgramInfo(planoProgramInfo);
 
         // Añadirlos a la escena
         console.log("Adding bowling ball");
 
-        this.objects.push(pin);
-        this.objects.push(pin2);
-        this.objects.push(bowlingBall);
         this.objects.push(plano);
+        this.objects.push(bowlingBall);
 
         webGLManager.setPrimitives(this.objects);
     }
@@ -79,4 +99,7 @@ export class SceneManager {
     getBowlingBall(){
         return this.bowlingBall;
     }
+
+
   }
+
