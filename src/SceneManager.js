@@ -131,6 +131,10 @@ export class SceneManager {
         }
         
         this.updateScoreTable();
+
+        if (this.scoreManager.isGameOver()) {
+            this.showGameOver();
+        }
         
         if (shouldResetPins) {
             this.resetPins();
@@ -186,6 +190,72 @@ export class SceneManager {
         }
     
         webGLManager.setPrimitives(this.objects);
+    }
+
+    showGameOver() {
+        // Crear el elemento de Game Over si no existe
+        let gameOverElement = document.getElementById('game-over-message');
+        
+        if (!gameOverElement) {
+            gameOverElement = document.createElement('div');
+            gameOverElement.id = 'game-over-message';
+            gameOverElement.style.position = 'absolute';
+            gameOverElement.style.top = '50%';
+            gameOverElement.style.left = '50%';
+            gameOverElement.style.transform = 'translate(-50%, -50%)';
+            gameOverElement.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            gameOverElement.style.color = 'white';
+            gameOverElement.style.padding = '20px';
+            gameOverElement.style.borderRadius = '10px';
+            gameOverElement.style.textAlign = 'center';
+            gameOverElement.style.zIndex = '1000';
+            gameOverElement.style.fontFamily = 'Arial, sans-serif';
+            
+            const finalScore = this.scoreManager.getFinalScore();
+            gameOverElement.innerHTML = `
+                <h1 style="margin-top: 0;">GAME OVER</h1>
+                <p style="font-size: 1.2em;">Tu puntuación final fue: ${finalScore}</p>
+                <button id="restart-button" style="
+                    background-color: #4CAF50;
+                    border: none;
+                    color: white;
+                    padding: 10px 20px;
+                    text-align: center;
+                    text-decoration: none;
+                    display: inline-block;
+                    font-size: 16px;
+                    margin: 10px 2px;
+                    cursor: pointer;
+                    border-radius: 5px;
+                ">Jugar de nuevo</button>
+            `;
+            
+            document.body.appendChild(gameOverElement);
+            
+            // Agregar evento al botón de reinicio
+            document.getElementById('restart-button').addEventListener('click', () => {
+                this.resetGame();
+                document.body.removeChild(gameOverElement);
+                this.inputManager.start();
+            });
+        }
+        this.inputManager.stop();
+    }
+
+    resetGame() {
+        // Reiniciar el administrador de puntuación
+        this.scoreManager.reset();
+        
+        // Reiniciar el estado del juego
+        this.isFirstThrow = true;
+        this.firstThrowPins = 0;
+        this.secondThrowPins = 0;
+        
+        // Actualizar la tabla de puntuación
+        this.updateScoreTable();
+        
+        // Reiniciar los pines y la bola
+        this.resetPins();
     }
 
     update(dt) {

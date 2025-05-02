@@ -15,6 +15,8 @@ window.onload = function init() {
     const bowlingBall = sceneManager.getBowlingBall();
     inputManager.setBowlingBall(bowlingBall);
     inputManager.start();
+
+    sceneManager.inputManager = inputManager;
     
     new MassManager(bowlingBall);
     

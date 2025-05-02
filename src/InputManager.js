@@ -144,14 +144,19 @@ export class InputManager {
     // Funciones Publicas
     // ----------------------------
     start() {
-        this.bowlingBall = this.sceneManager.bowlingBall
-        window.addEventListener("keydown", this.#onKeyDown.bind(this));
-        window.addEventListener("keyup", this.#onKeyUp.bind(this));
+        this.bowlingBall = this.sceneManager.bowlingBall;
+
+        // Guardar las funciones enlazadas
+        this._boundOnKeyDown = this.#onKeyDown.bind(this);
+        this._boundOnKeyUp = this.#onKeyUp.bind(this);
+
+        window.addEventListener("keydown", this._boundOnKeyDown);
+        window.addEventListener("keyup", this._boundOnKeyUp);
     }
 
     stop() {
-        window.removeEventListener("keydown", this.#onKeyDown);
-        window.removeEventListener("keyup", this.#onKeyUp);
+        window.removeEventListener("keydown", this._boundOnKeyDown);
+        window.removeEventListener("keyup", this._boundOnKeyUp);
     }
 
     // Para obtener la instancia de la bola

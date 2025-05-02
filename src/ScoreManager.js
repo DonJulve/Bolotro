@@ -3,10 +3,14 @@ export class ScoreManager {
         this.rounds = Array(10).fill({ first: null, second: null, total: null });
         this.currentRound = 0;
         this.isFirstThrow = true;
+        this.gameOver = false;
     }
 
     addThrow(pins) {
-        if (this.currentRound >= 10) return;
+        if (this.gameOver || this.currentRound >= 10) {
+            this.gameOver = true;
+            return;
+        }
 
         const round = this.rounds[this.currentRound];
         
@@ -120,9 +124,34 @@ export class ScoreManager {
         return table;
     }
 
+    isGameOver() {
+        if (this.currentRound >= 10) {
+            const lastRound = this.rounds[9];
+            
+            if (!(lastRound.first === 10) && 
+                !(lastRound.second !== null && lastRound.first + lastRound.second === 10)) {
+                return true;
+            }
+            
+            if (lastRound.total !== null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    getFinalScore() {
+        if (this.isGameOver()) {
+            const lastRound = this.rounds[9];
+            return lastRound.total || 0;
+        }
+        return 0;
+    }
+
     reset() {
         this.rounds = Array(10).fill({ first: null, second: null, total: null });
         this.currentRound = 0;
         this.isFirstThrow = true;
+        this.gameOver = false;
     }
 }
