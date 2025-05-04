@@ -12,6 +12,7 @@ export class InputManager {
         this.sceneManager = new SceneManager();
         this.bowlingBall = null;
         this.forceBar = new ForceBar();
+        this._spaceInterval = null;
         // TODO
     }
     // ----------------------------
@@ -73,10 +74,19 @@ export class InputManager {
 
     #spaceKeyHandler(estado) {
         if (estado == "PRESIONADA") {
+            if (this._spaceInterval) return;
             this.forceBar.loadShot();
+            this._spaceInterval = setInterval(() => {
+              this.forceBar.loadShot();
+            }, 50);
             
         }
         else if (estado == "SOLTADA") {
+            if (this._spaceInterval) {
+              clearInterval(this._spaceInterval);
+              this._spaceInterval = null;
+            }
+
             const potencia = this.forceBar.shoot();
 
             const anguloTiroRadianes = (90 - this.camera.rotationAngle ) * (Math.PI / 180);

@@ -65,9 +65,12 @@ export class BowlingBall {
             this.initialVelocity[1],
             this.initialVelocity[2]
         );
-        this.orientation = this.initialOrientation;
+        this.orientation = mat4();
         this.currentRotationAngle = 0;
         this.currentHorizontalOffset = 0;
+        this.collisionedPins = [];
+        this.velocityNextFrame = vec3(0, 0, 0);
+        this.positionNextFrame = vec3(0, 0, 0);
         this.#updatePosition();
     }
 
@@ -164,6 +167,30 @@ export class BowlingBall {
         if (this.start === false) {
             return;
         }
+
+        const nextY = this.positionNextFrame[1];
+        const planeY = 0;
+        const eps = 0.02;  // tolerancia, un poco mayor para absorber penetraciones
+
+        if (nextY <= this.radius + eps) {
+          const dx = this.positionNextFrame[0] - this.position[0];
+          const dz = this.positionNextFrame[2] - this.position[2];
+          const dist = Math.hypot(dx, dz);
+
+          // umbral muy pequeño en vez de >0
+          if (dist > 1e-4) {
+            const dAngleRad = dist / this.radius;
+            const dAngleDeg = dAngleRad * (180/Math.PI);
+
+            const up = vec3(0,1,0);
+            const velH = vec3(dx,0,dz);
+            const axis = normalize(cross(up, velH));
+
+            const deltaRot = rotate(dAngleDeg, axis);
+            this.orientation = mult(deltaRot, this.orientation);
+          }
+        }
+
         this.velocity = this.velocityNextFrame;
         this.position = this.positionNextFrame;
         this.#updatePosition();
