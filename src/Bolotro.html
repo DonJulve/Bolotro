@@ -86,16 +86,24 @@
 
 	<!-- Fragment shader -->
 	<script id="plane-fragment-shader" type="x-shader/x-fragment">
-		precision mediump float;
-		uniform vec4 baseColor;
+    precision mediump float;
+    uniform sampler2D u_texture;
+    uniform vec4 baseColor;
 
-		varying vec3 origPos;
+    varying vec3 origPos;
 
-		void main() 
-		{ 
-			gl_FragColor = baseColor;
-		}
-	</script>
+    void main() {
+        // Convertir coordenadas del plano (-30 a 30 en X, -10 a 10 en Y) a UV (0 a 1)
+        // Considerando que tu plano tiene 60 unidades de ancho (X) y 20 de alto (Y)
+        float u = (origPos.x + 30.0) / 60.0;  // Normalizar X: [-30,30] -> [0,1]
+        float v = (origPos.y + 10.0) / 20.0;  // Normalizar Y: [-10,10] -> [0,1]
+    
+        // Invertir coordenada V si la textura aparece al revés
+    
+        vec4 texColor = texture2D(u_texture, vec2(u, v));
+        gl_FragColor = texColor * baseColor;
+    }
+  </script>
 
 	<script id="sphere-fragment-shader" type="x-shader/x-fragment">
     precision mediump float;

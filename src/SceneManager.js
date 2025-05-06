@@ -70,8 +70,9 @@ export class SceneManager {
         // Instanciacion de los objetos
         var plano = new Plano();
         var bowlingBall = new BowlingBall(-30, 1, 0);
-        // Para q el inputmanager pueda usarna
-        this.bowlingBall = bowlingBall; 
+        this.plano = plano;
+        // Para que el inputmanager pueda usarla
+        this.bowlingBall = bowlingBall;
 
         this.createPins();
 
@@ -302,7 +303,10 @@ export class SceneManager {
     getBowlingBall(){
         return this.bowlingBall;
     }
-
+    
+    getPlano(){
+        return this.plano;
+    }
 
   }
 

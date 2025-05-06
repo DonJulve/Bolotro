@@ -331,8 +331,9 @@ export class Plano {
     constructor() {
         this.pointsArray = pointsPlane;
         this.uniforms = {
-			u_color: [0.502, 0.251, 0.0, 0.75],
-			u_model: new mat4(),
+        u_color: [1.0, 1.0, 1.0, 1.0],
+			  u_model: new mat4(),
+        u_texture: null
 		};
 		this.primType = "triangles";   
         
@@ -347,7 +348,31 @@ export class Plano {
 
         this.#rotate();
     }
-    
+
+    loadTexture(gl, textureUrl) {
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        
+        // Textura temporal mientras se carga
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, 
+                      new Uint8Array([255, 255, 255, 255]));
+        
+        const image = new Image();
+        image.onload = () => {
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            
+            // Configuración para textura repetible
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            
+            this.uniforms.u_texture = texture;
+        };
+        image.src = textureUrl;
+    }
 
     #rotate() {
         const rotationMatrix = rotate(90, vec3(1, 0, 0)); 

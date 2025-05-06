@@ -13,6 +13,7 @@ window.onload = function init() {
     sceneManager.setupScene();
     
     const bowlingBall = sceneManager.getBowlingBall();
+    const plano = sceneManager.getPlano();
     inputManager.setBowlingBall(bowlingBall);
     inputManager.start();
 
@@ -22,5 +23,9 @@ window.onload = function init() {
     
     webgl.init(45.0);
     bowlingBall.loadTexture(webgl.gl, "../assets/watermelon.png");
+    plano.loadTexture(webgl.gl, "../assets/wood.jpg");
+
+    // El verdadero fondo del plano increible
+    // plano.loadTexture(webgl.gl, "../assets/capibara.jpg");
     webgl.start();
 }
