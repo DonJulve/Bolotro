@@ -13,6 +13,7 @@ export class InputManager {
         this.bowlingBall = null;
         this.forceBar = new ForceBar();
         this._spaceInterval = null;
+        this.shotInProgress = false;
         // TODO
     }
     // ----------------------------
@@ -66,6 +67,7 @@ export class InputManager {
             this.bowlingBall.reset();
             this.sceneManager.removeFalledPins();
             this.forceBar.reset();
+            this.shotInProgress = false;
         }
         else if (estado == "SOLTADA") {
             // TODO
@@ -79,7 +81,7 @@ export class InputManager {
             this._spaceInterval = setInterval(() => {
               this.forceBar.loadShot();
             }, 50);
-            
+            this.shotInProgress = false;
         }
         else if (estado == "SOLTADA") {
             if (this._spaceInterval) {
@@ -95,11 +97,13 @@ export class InputManager {
             this.bowlingBall.velocity = vec3(x, 0, z);
             this.bowlingBall.start = true;
 
-            this.camera.eye = vec3(-30.0, 10.0, 10.0)
+            this.camera.eye = vec3(-30.0, 10.0, 10.0);
+            this.shotInProgress = true;
         }
     }
 
     #onKeyDown(event) {
+        if (this.shotInProgress && !["R", "r"].includes(event.key)) return;
         switch(event.key) {
             case "ArrowRight":
                 this.#rightKeyHandler("PRESIONADA");
@@ -125,6 +129,7 @@ export class InputManager {
     }
 
     #onKeyUp(event) {
+        if (this.shotInProgress && !["R", "r"].includes(event.key)) return;
         switch(event.key) {
             case "ArrowRight":
                 this.#rightKeyHandler("SOLTADA");
