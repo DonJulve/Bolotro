@@ -20,8 +20,9 @@ export class BowlingBall {
     
         this.pointsArray = pointsSphere;
         this.uniforms = {
-          u_color: [0.0, 1.0, 1.0, 0.3],  // Color de la bola
+          u_color: [1.0, 1.0, 1.0, 1.0],  // Color de la bola
           u_model: new mat4(),      // Matriz de modelo (posición y transformación)
+          u_texture: null
         };
         this.primType = "triangles";
 
@@ -43,6 +44,32 @@ export class BowlingBall {
 
         this.#updatePosition();
     }
+
+    loadTexture(gl, url) {
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        
+        // Textura temporal mientras se carga
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, 
+                      new Uint8Array([255, 255, 255, 255]));
+        
+        const image = new Image();
+        image.onload = () => {
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            
+            // Configuración para WebGL
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            
+            this.uniforms.u_texture = texture;
+        };
+        image.src = url;
+        
+        return texture;
+    }
+
 
     #updatePosition() {
         let transform = mult(translate(this.position[0], this.position[1], this.position[2]), this.orientation);

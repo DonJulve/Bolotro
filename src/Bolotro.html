@@ -98,45 +98,26 @@
 	</script>
 
 	<script id="sphere-fragment-shader" type="x-shader/x-fragment">
-		precision mediump float;
-		uniform vec4 baseColor;
+    precision mediump float;
+    uniform vec4 baseColor;
+    uniform sampler2D u_texture;  // Nueva uniform para la textura
 
-		varying vec3 origPos;
+    varying vec3 origPos;
 
-		vec2 cart2rect(in vec3 pos)
-		{
-			vec3 norm_pos = normalize(pos);
-			float rho = atan(norm_pos.y, norm_pos.x);
-			if (norm_pos.x == 0.0) {
-				rho = 0.0;
-			}
-			return vec2(rho, norm_pos.z);
-		}
+    vec2 sphericalMap(in vec3 pos) {
+        // Convertir coordenadas 3D a coordenadas UV para mapeo esférico
+        vec3 normalized = normalize(pos);
+        float u = 0.5 + atan(normalized.z, normalized.x) / (2.0 * 3.14159265359);
+        float v = 0.5 - asin(normalized.y) / 3.14159265359;
+        return vec2(u, v);
+    }
 
-		float checkerboard(in vec2 coords)
-		{
-			if (coords.x <= 0.0) {
-				if (coords.y <= 0.0) {
-					return 0.5;
-				} else {
-					return 1.0;
-				}
-			} else {
-				if (coords.y <= 0.0) {
-					return 1.0;
-				} else {
-					return 0.5;
-				}
-			}
-		}
-
-		void main() 
-		{ 
-			vec2 rectCoords = cart2rect(origPos);
-
-			gl_FragColor = vec4(baseColor.xyz * checkerboard(rectCoords), 1.0);
-		}
-	</script>
+    void main() {
+        vec2 uv = sphericalMap(origPos);
+        vec4 texColor = texture2D(u_texture, uv);
+        gl_FragColor = texColor * baseColor;
+    }
+  </script>
 
 	<!-- Ficheros Javascript externos. 
 		Los tres primeros son utilidades comunes (Ed Angel's code: https://www.cs.unm.edu/~angel/BOOK/INTERACTIVE_COMPUTER_GRAPHICS/SEVENTH_EDITION/) 

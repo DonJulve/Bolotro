@@ -74,12 +74,24 @@ export class WebGLManager {
         var view = this.camera.getViewMatrix();
 
         // Matrices
-	    // Copy uniform model values to corresponding values in shaders
-        gl.uniformMatrix4fv( pInfo.uniformLocations.projection, gl.FALSE, this.projectionMatrix);
+        gl.uniformMatrix4fv(pInfo.uniformLocations.projection, gl.FALSE, this.projectionMatrix);
         gl.uniformMatrix4fv(pInfo.uniformLocations.view, gl.FALSE, view);
+	    // Copy uniform model values to corresponding values in shaders
         if (pInfo.uniformLocations.baseColor != null) {
-            gl.uniform4f(pInfo.uniformLocations.baseColor, uniforms.u_color[0], uniforms.u_color[1], uniforms.u_color[2], uniforms.u_color[3]);
+        gl.uniform4f(pInfo.uniformLocations.baseColor, 
+                    uniforms.u_color[0], 
+                    uniforms.u_color[1], 
+                    uniforms.u_color[2], 
+                    uniforms.u_color[3]);
         }
+    
+        // Textura
+        if (pInfo.uniformLocations.u_texture != null && uniforms.u_texture) {
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, uniforms.u_texture);
+            gl.uniform1i(pInfo.uniformLocations.u_texture, 0);
+        }
+    
         gl.uniformMatrix4fv(pInfo.uniformLocations.model, gl.FALSE, uniforms.u_model);
     }
 
@@ -158,6 +170,7 @@ export class WebGLManager {
         programInfo.uniformLocations.view = gl.getUniformLocation(programInfo.program, "view");
         programInfo.uniformLocations.projection = gl.getUniformLocation(programInfo.program, "projection");
         programInfo.uniformLocations.baseColor = gl.getUniformLocation(programInfo.program, "baseColor");
+        programInfo.uniformLocations.u_texture = gl.getUniformLocation(programInfo.program, "u_texture");
         
         // Obtener ubicaciones de atributos
         programInfo.attribLocations.vPosition = gl.getAttribLocation(programInfo.program, "vPosition");

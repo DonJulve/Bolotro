@@ -21,5 +21,6 @@ window.onload = function init() {
     new MassManager(bowlingBall);
     
     webgl.init(45.0);
+    bowlingBall.loadTexture(webgl.gl, "../assets/watermelon.png");
     webgl.start();
 }
