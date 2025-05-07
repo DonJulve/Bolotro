@@ -28,7 +28,8 @@ export class SceneManager {
         SceneManager.instance = this;
     }
     createPins() {
-        var webGLManager = new WebGLManager(); 
+        var webGLManager = new WebGLManager();
+        const gl = webGLManager.gl;
         
         //Borra todos los pines antes de añadir los nuevos
         this.objects = this.objects.filter(object => {
@@ -55,6 +56,7 @@ export class SceneManager {
                 
                 const pin = new Pin(z, y, x);
                 pin.setProgramInfo(cubeProgramInfo);
+                pin.loadModel(gl, "../assets/Pin.obj");
                 this.objects.push(pin);
                 count++;
                 if (count >= 10) break; // Solo crear 10 bolos

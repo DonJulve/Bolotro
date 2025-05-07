@@ -1,6 +1,7 @@
 import { pointsSphere, pointsCube, pointsPlane } from "./Geometría.js";
 import { checkCollision, resolveCollision,  multVectScalar } from "./PhysicsEngine.js";
 import { SceneManager } from "./SceneManager.js";
+import { OBJLoader } from "./OBJLoader.js";
 
 export class BowlingBall {
 
@@ -227,43 +228,105 @@ export class BowlingBall {
 export class Pin {
     constructor(x, y, z) {
         this.scene = new SceneManager();
-        this.pointsArray = pointsCube;
-        this.uniforms = {
-			u_color: [0.3, 0.3, 0.3, 0.3],
-			u_model: new mat4(),
-		};
-		this.primType = "triangles";
-
-        // Propiedades fisicas
-        this.mass = 2;
         
+        // Representación física (cubo)
+        this.hitboxPointsArray = pointsCube;
+        this.hitboxUniforms = {
+            u_color: [0.3, 0.3, 0.3, 0.3],
+            u_model: new mat4(),
+        };
+        
+        // Representación visual (OBJ)
+        this.visualPointsArray = null; // Se cargará después
+        this.visualUniforms = {
+            u_color: [1.0, 1.0, 1.0, 1.0],
+            u_model: new mat4(),
+            u_texture: null
+        };
+        
+        this.primType = "triangles";
+
+        // Propiedades físicas (usando el cubo como hitbox)
+        this.mass = 2;
         this.velocity = vec3(0, 0, 0);
         this.position = vec3(x, y, z);
         this.angularVelocity = vec3(0, 0, 0);
         this.rotationMatrix = mat4();
+        this.visualModelMatrix = mat4();
 
         this.velocityNextFrame = vec3(0,0,0);
         this.positionNextFrame = vec3(0,0,0);
 
-        // Propiedades exclusivas del pin
+        // Propiedades para el escalado inicial del modelo
+        this.modelScale = vec3(0.1, 0.1, 0.1); // Ajusta estos valores según necesites
+        this.modelRotation = -90; // Rotación en grados
+        this.modelRotationAxis = vec3(1, 0, 0); // Eje X
+
+        // Propiedades del pin
         this.pinNumber = Pin.numPines++;
         this.width = 1;
-        this.depth = 1
+        this.depth = 1;
         this.height = 3;
         this.hasHitBall = false;
         this.hasHitPin = false;
         this.hasFallen = false;
         
-        // Propiedades del sistema de colisiones 
         this.pointOfCollision = null;
-        this.#updatePosition();    
+        this.#updatePosition();
     }
 
-    #updatePosition() {
-        const translationMatrix = translate(this.position[0], this.position[1], this.position[2]);
+    async loadModel(gl, url) {
+        try {
+            // Cargar el modelo OBJ
+            this.visualPointsArray = await OBJLoader.loadOBJ(gl, url);
+            
+            // Configurar transformación inicial del modelo visual
+            this.visualModelMatrix = mat4();
+            
+            // 1. Aplicar escalado
+            this.visualModelMatrix = mult(this.visualModelMatrix, scale(
+                this.modelScale[0], 
+                this.modelScale[1], 
+                this.modelScale[2]
+            ));
+            
+            // 2. Aplicar rotación inicial
+            this.visualModelMatrix = mult(
+                this.visualModelMatrix, 
+                rotate(this.modelRotation, this.modelRotationAxis)
+            );
+            
+            // 3. Combinar con la transformación física (posición y rotación actual)
+            this.#updatePosition();
+            
+            console.log("Modelo OBJ cargado y transformado correctamente");
+        } catch (error) {
+            console.error("Error loading OBJ model:", error);
+            // Si falla la carga, usamos el cubo como representación visual también
+            this.visualPointsArray = this.hitboxPointsArray;
+            this.visualModelMatrix = mat4(); // Matriz identidad
+        }
+    }
 
-        // Asegúrate de tener this.rotationMatrix inicializada en el constructor como mat4()
-        this.uniforms.u_model = mult(translationMatrix, this.rotationMatrix);
+
+    #updatePosition() {
+        const translationMatrix = translate(
+            this.position[0], 
+            this.position[1], 
+            this.position[2]
+        );
+        
+        // Actualizar hitbox (cubo de colisión)
+        this.hitboxUniforms.u_model = mult(translationMatrix, this.rotationMatrix);
+        
+        // Actualizar modelo visual (OBJ)
+        if (this.visualPointsArray) {
+            // Combinar: transformación física * transformación visual inicial
+            this.visualUniforms.u_model = mult(
+                mult(translationMatrix, this.rotationMatrix),
+                this.visualModelMatrix
+            );
+        }
     }
 
   

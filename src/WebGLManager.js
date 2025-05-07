@@ -39,13 +39,36 @@ export class WebGLManager {
         // Renderizacion de la escena
         const gl = this.gl;
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+        
         var objects = this.scene.getObjectsToDraw();
         for (let object of objects) {
-            gl.useProgram(object.programInfo.program);
-            this.#setBuffersAndAttributes(object);
-            this.#setUniforms(object);
-            gl.drawArrays(object.primitive, 0, object.pointsArray.length);
+            // Renderizar modelo principal (OBJ o primitiva básica)
+            if (object.visualPointsArray || object.pointsArray) {
+                const pointsToRender = object.visualPointsArray || object.pointsArray;
+                const uniformsToUse = object.visualUniforms || object.uniforms;
+                
+                gl.useProgram(object.programInfo.program);
+                this.#setBuffersAndAttributes(object, pointsToRender);
+                this.#setUniforms(object, uniformsToUse);
+                gl.drawArrays(object.primitive, 0, pointsToRender.length);
+            }
+            
+            // Renderizar hitbox (opcional - solo para debug)
+            if (object.hitboxPointsArray && DEBUG_MODE) {
+                gl.useProgram(object.programInfo.program);
+                this.#setBuffersAndAttributes(object, object.hitboxPointsArray);
+                
+                // Usamos un color semitransparente para las hitboxes
+                const debugUniforms = {
+                    ...object.hitboxUniforms,
+                    u_color: [0.3, 0.8, 0.3, 0.3] // Verde semitransparente
+                };
+                
+                this.#setUniforms(object, debugUniforms);
+                gl.drawArrays(object.primitive, 0, object.hitboxPointsArray.length);
+            }
         }
+        
         WebGLManager.last_tick = WebGLManager.actual_tick;
         requestAnimationFrame(() => this.#render());
     }
@@ -53,45 +76,44 @@ export class WebGLManager {
     // -----------------
     // UTILS
     // -----------------
-    #setBuffersAndAttributes(object) {
+    #setBuffersAndAttributes(object, pointsArray) {
         const gl = this.gl;
-        var pointsArray = object.pointsArray;
         var pInfo = object.programInfo;
 
-        // Load the data into GPU data buffers
-        // Vertices
+        // Cargar datos en los buffers de la GPU
         var vertexBuffer = gl.createBuffer();
-        gl.bindBuffer( gl.ARRAY_BUFFER, vertexBuffer );
-        gl.bufferData( gl.ARRAY_BUFFER,  flatten(pointsArray), gl.STATIC_DRAW );
-        gl.vertexAttribPointer( pInfo.attribLocations.vPosition, 4, gl.FLOAT, gl.FALSE, 0, 0 );
-        gl.enableVertexAttribArray( pInfo.attribLocations.vPosition );
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(pInfo.attribLocations.vPosition, 4, gl.FLOAT, gl.FALSE, 0, 0);
+        gl.enableVertexAttribArray(pInfo.attribLocations.vPosition);
     }
 
-    #setUniforms(object) {
+    #setUniforms(object, uniforms) {
         const gl = this.gl;
-        var uniforms = object.uniforms;
         var pInfo = object.programInfo;
         var view = this.camera.getViewMatrix();
 
         // Matrices
         gl.uniformMatrix4fv(pInfo.uniformLocations.projection, gl.FALSE, this.projectionMatrix);
         gl.uniformMatrix4fv(pInfo.uniformLocations.view, gl.FALSE, view);
-	    // Copy uniform model values to corresponding values in shaders
+        
+        // Color base
         if (pInfo.uniformLocations.baseColor != null) {
-        gl.uniform4f(pInfo.uniformLocations.baseColor, 
-                    uniforms.u_color[0], 
-                    uniforms.u_color[1], 
-                    uniforms.u_color[2], 
-                    uniforms.u_color[3]);
+            gl.uniform4f(pInfo.uniformLocations.baseColor, 
+                        uniforms.u_color[0], 
+                        uniforms.u_color[1], 
+                        uniforms.u_color[2], 
+                        uniforms.u_color[3]);
         }
-    
+        
         // Textura
         if (pInfo.uniformLocations.u_texture != null && uniforms.u_texture) {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, uniforms.u_texture);
             gl.uniform1i(pInfo.uniformLocations.u_texture, 0);
         }
-    
+        
+        // Matriz de modelo
         gl.uniformMatrix4fv(pInfo.uniformLocations.model, gl.FALSE, uniforms.u_model);
     }
 
@@ -197,3 +219,5 @@ export class WebGLManager {
         });	
     }
 }
+
+var DEBUG_MODE = false;
