@@ -4,6 +4,8 @@
 //
 // ------------------------------
 
+import { SceneManager } from "./SceneManager.js";
+
 // Colisiones entre pins
 // * FUNCIONA SIN ROTACIONES DE PIN
 function checkBoundingBoxes(a, b) {
@@ -225,11 +227,37 @@ function resolvePinBall (dt, pin, ball) {
 }
 
 function resolveBallPlano(dt, ball, plano) {
+    // Nos hemos salido del plano
+    if (Math.abs(ball.position[0]) > 30 || Math.abs(ball.position[2]) > 10) {
+        // Borrar bola de la escena
+        let sceneManager = new SceneManager();
+        sceneManager.objects = sceneManager.objects.filter(object => {
+            if (object == ball) {
+                return false
+            }
+            else {
+                return true
+            }
+        });
+    }
     ball.velocityNextFrame = vec3(ball.velocity[0], ball.velocity[1]*-0.4, ball.velocity[2]);
     ball.positionNextFrame = add(ball.position, mult(dt, ball.velocityNextFrame));
 }
 
 function resolvePinPlano(dt, pin, plane) {
+    if (Math.abs(pin.position[0]) > 30 || Math.abs(pin.position[2]) > 10) {
+        // Borrar pin de la escena
+        let sceneManager = new SceneManager();
+        sceneManager.objects = sceneManager.objects.filter(object => {
+            if (object == pin) {
+                return false
+            }
+            else {
+                return true
+            }
+        });
+    }
+
     const restitution = 0.2;   // Cuánto rebota (0 = no rebota, 1 = rebote perfecto)
     const friction = 0.5;      // Cuánta fricción aplica en horizontal
 

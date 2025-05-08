@@ -99,6 +99,12 @@ export class BowlingBall {
         this.collisionedPins = [];
         this.velocityNextFrame = vec3(0, 0, 0);
         this.positionNextFrame = vec3(0, 0, 0);
+
+        // Añadir bola a la escena si no está
+        let sceneManager = new SceneManager();
+        if (!sceneManager.objects.includes(this)) {
+            sceneManager.objects.push(this)
+        }
         this.#updatePosition();
     }
 

@@ -60,6 +60,20 @@ export class InputManager {
         }
     }
 
+    #upKeyHandler(estado) {
+        if (estado == "PRESIONADA") {
+            //Chekeo para no quedarnos bloqueados en la vista halcon
+            if (this.camera.eye[2] !== 10) {
+                this.lastEyeCamera = this.camera.eye
+                this.camera.eye = vec3(-20.0, 15.0, 10.0);
+            }
+        }
+        else if (estado == "SOLTADA") {
+            this.camera.eye = this.lastEyeCamera
+        }
+    }
+
+
     #R_KeyHandler(estado) {
         if (estado == "PRESIONADA") {
             this.sceneManager.registerThrow();
@@ -97,19 +111,21 @@ export class InputManager {
             this.bowlingBall.velocity = vec3(x, 0, z);
             this.bowlingBall.start = true;
 
-            this.camera.eye = vec3(-30.0, 10.0, 10.0);
             this.shotInProgress = true;
         }
     }
 
     #onKeyDown(event) {
-        if (this.shotInProgress && !["R", "r"].includes(event.key)) return;
+        if (this.shotInProgress && !["R", "r", "ArrowUp"].includes(event.key)) return;
         switch(event.key) {
             case "ArrowRight":
                 this.#rightKeyHandler("PRESIONADA");
                 break;
             case "ArrowLeft":
                 this.#leftKeyHandler("PRESIONADA");
+                break;
+            case "ArrowUp":
+                this.#upKeyHandler("PRESIONADA");
                 break;
 
             case "R":
@@ -129,7 +145,7 @@ export class InputManager {
     }
 
     #onKeyUp(event) {
-        if (this.shotInProgress && !["R", "r"].includes(event.key)) return;
+        if (this.shotInProgress && !["R", "r", "ArrowUp"].includes(event.key)) return;
         switch(event.key) {
             case "ArrowRight":
                 this.#rightKeyHandler("SOLTADA");
@@ -138,6 +154,9 @@ export class InputManager {
                 this.#leftKeyHandler("SOLTADA");
                 break;
 
+            case "ArrowUp":
+                this.#upKeyHandler("SOLTADA");
+                break;
             case "R":
             case "r":
                 this.#R_KeyHandler("SOLTADA");
