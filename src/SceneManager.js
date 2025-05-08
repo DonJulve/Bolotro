@@ -25,6 +25,7 @@ export class SceneManager {
         this.secondThrowPins = 0;
         this.isFirstThrow = true;
         this.outPins = 0;
+        this.hasPlayedCollisionSound = false;
 
         SceneManager.instance = this;
     }
@@ -89,8 +90,6 @@ export class SceneManager {
         plano.setProgramInfo(planoProgramInfo);
 
         // Añadirlos a la escena
-        console.log("Adding bowling ball");
-
         this.objects.push(plano);
         this.objects.push(bowlingBall);
 
@@ -266,8 +265,6 @@ export class SceneManager {
     }
 
     update(dt) {
-        console.log("Updating scene");
-
         // Calculamos el siguiente frame para todos los objetos
         for (let object of this.objects) {
             object.calculateNextFrame(dt);

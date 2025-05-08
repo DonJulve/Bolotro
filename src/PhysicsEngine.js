@@ -64,7 +64,15 @@ function checkSphereAabb(ball, pin) {
     const dy = ballPos[1] - closestY;
     const dz = ballPos[2] - closestZ;
 
-    return (dx * dx + dy * dy + dz * dz) < r * r;
+    if ((dx * dx + dy * dy + dz * dz) < r * r) {
+        const sceneManager = new SceneManager();
+        if (!sceneManager.hasPlayedCollisionSound) {
+            window.playCollisionSound();
+            sceneManager.hasPlayedCollisionSound = true;
+        }
+        return true;
+    }
+    return false;
 }
 
 // Colision entre la bola y el plano
@@ -235,6 +243,7 @@ function resolveBallPlano(dt, ball, plano) {
             if (object == ball) {
             setTimeout(() => {
                 // Ejecutar las mismas acciones que al presionar R
+                sceneManager.hasPlayedCollisionSound = false;
                 sceneManager.registerThrow();
                 sceneManager.bowlingBall.reset();
                 sceneManager.removeFalledPins();

@@ -24,8 +24,7 @@ window.onload = function init() {
     webgl.init(45.0);
     bowlingBall.loadTexture(webgl.gl, "../assets/watermelon.png");
     plano.loadTexture(webgl.gl, "../assets/wood.jpg");
-
-    // El verdadero fondo del plano increible
-    // plano.loadTexture(webgl.gl, "../assets/capibara.jpg");
+    window.sceneManager = sceneManager;
+    window.webgl = webgl;
     webgl.start();
 }

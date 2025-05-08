@@ -181,7 +181,6 @@ export class BowlingBall {
             // No queremos comparar las colisiones con nosotros mismos
             if (object != this && !this.collisionedPins.includes(object) ) {
                 if (checkCollision(this, object)) {
-                    console.log("COLISION!");
                     if (object.constructor.name == "Pin") {
                         this.collisionedPins.push(object);
                     }
@@ -310,7 +309,6 @@ export class Pin {
             // 3. Combinar con la transformación física (posición y rotación actual)
             this.#updatePosition();
             
-            console.log("Modelo OBJ cargado y transformado correctamente");
         } catch (error) {
             console.error("Error loading OBJ model:", error);
             // Si falla la carga, usamos el cubo como representación visual también
