@@ -258,9 +258,12 @@ export class Pin {
         this.positionNextFrame = vec3(0,0,0);
 
         // Propiedades para el escalado inicial del modelo
-        this.modelScale = vec3(0.1, 0.1, 0.1); // Ajusta estos valores según necesites
+        this.modelScale = vec3(0.07, 0.07, 0.07); 
         this.modelRotation = -90; // Rotación en grados
         this.modelRotationAxis = vec3(1, 0, 0); // Eje X
+
+        this.textureLoaded = false;
+        this.texture = null;
 
         // Propiedades del pin
         this.pinNumber = Pin.numPines++;
@@ -306,6 +309,30 @@ export class Pin {
             this.visualPointsArray = this.hitboxPointsArray;
             this.visualModelMatrix = mat4(); // Matriz identidad
         }
+    }
+
+    loadTexture(gl, textureUrl) {
+        this.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        
+        // Textura temporal mientras se carga
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, 
+                      new Uint8Array([255, 255, 255, 255]));
+        
+        const image = new Image();
+        image.onload = () => {
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            
+            // Configuración para WebGL
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            
+            this.textureLoaded = true;
+            this.visualUniforms.u_texture = this.texture;
+        };
+        image.src = textureUrl;
     }
 
 

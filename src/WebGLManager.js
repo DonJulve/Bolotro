@@ -132,6 +132,7 @@ export class WebGLManager {
         if (!this.gl) {
             alert("WebGL isn't available");
         }
+        this.setupCanvas();
         this.scene = new SceneManager();
         this.camera = new Camera();
 
@@ -142,6 +143,41 @@ export class WebGLManager {
         console.log("WebGLManager construido correctamente");
 
         WebGLManager.last_tick = Date.now();
+    }
+
+    setupCanvas() {
+        const canvas = this.canvas;
+        const gl = this.gl;
+        
+        function resize() {
+            // Obtener dimensiones del viewport
+            const displayWidth = window.innerWidth;
+            const displayHeight = window.innerHeight;
+            
+            // Ajustar el tamaño interno del canvas (buffer de dibujo)
+            canvas.width = Math.floor(displayWidth * window.devicePixelRatio);
+            canvas.height = Math.floor(displayHeight * window.devicePixelRatio);
+            
+            // Ajustar el tamaño CSS para que coincida con el tamaño del viewport
+            canvas.style.width = displayWidth + 'px';
+            canvas.style.height = displayHeight + 'px';
+            
+            // Actualizar el viewport de WebGL
+            if (gl) {
+                gl.viewport(0, 0, canvas.width, canvas.height);
+            }
+        }
+        
+        // Configurar el listener de resize
+        window.addEventListener('resize', () => {
+            resize();
+            if (this.projectionMatrix) {
+                this.#setProjection(45.0); // Recalcula la proyección con el nuevo aspect ratio
+            }
+        });
+        
+        // Llamada inicial
+        resize();
     }
 
     /**
@@ -178,8 +214,8 @@ export class WebGLManager {
                 fragmentShader = "sphere-fragment-shader";
                 break;
             case "CUBE":
-                vertexShader = "plane-vertex-shader";
-                fragmentShader = "plane-fragment-shader";
+                vertexShader = "cube-vertex-shader";
+                fragmentShader = "cube-fragment-shader";
                 break;
             default:
                 throw new Error("Tipo de programa no soportado");

@@ -57,6 +57,7 @@ export class SceneManager {
                 const pin = new Pin(z, y, x);
                 pin.setProgramInfo(cubeProgramInfo);
                 pin.loadModel(gl, "../assets/Pin.obj");
+                pin.loadTexture(gl, "../assets/Rainbow.jpg");
                 this.objects.push(pin);
                 count++;
                 if (count >= 10) break; // Solo crear 10 bolos
