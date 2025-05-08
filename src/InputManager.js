@@ -117,12 +117,17 @@ export class InputManager {
 
     #onKeyDown(event) {
         if (this.shotInProgress && !["R", "r", "ArrowUp"].includes(event.key)) return;
+        const upKeyPressed = this.keysPressed.has("ArrowUp");
         switch(event.key) {
             case "ArrowRight":
-                this.#rightKeyHandler("PRESIONADA");
+                if (!upKeyPressed) {
+                    this.#rightKeyHandler("PRESIONADA");
+                }
                 break;
             case "ArrowLeft":
-                this.#leftKeyHandler("PRESIONADA");
+                if (!upKeyPressed) {
+                    this.#leftKeyHandler("PRESIONADA");
+                }
                 break;
             case "ArrowUp":
                 this.#upKeyHandler("PRESIONADA");
@@ -146,12 +151,17 @@ export class InputManager {
 
     #onKeyUp(event) {
         if (this.shotInProgress && !["R", "r", "ArrowUp"].includes(event.key)) return;
+        const upKeyPressed = this.keysPressed.has("ArrowUp");
         switch(event.key) {
             case "ArrowRight":
-                this.#rightKeyHandler("SOLTADA");
+                if (!upKeyPressed) {
+                    this.#rightKeyHandler("SOLTADA");
+                }
                 break;
             case "ArrowLeft":
-                this.#leftKeyHandler("SOLTADA");
+                if (!upKeyPressed) {
+                    this.#leftKeyHandler("SOLTADA");
+                }
                 break;
 
             case "ArrowUp":

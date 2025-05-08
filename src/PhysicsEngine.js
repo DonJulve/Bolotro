@@ -233,6 +233,18 @@ function resolveBallPlano(dt, ball, plano) {
         let sceneManager = new SceneManager();
         sceneManager.objects = sceneManager.objects.filter(object => {
             if (object == ball) {
+            setTimeout(() => {
+                // Ejecutar las mismas acciones que al presionar R
+                sceneManager.registerThrow();
+                sceneManager.bowlingBall.reset();
+                sceneManager.removeFalledPins();
+                if (sceneManager.inputManager) {
+                    sceneManager.inputManager.camera.reset();
+                    sceneManager.inputManager.forceBar.reset();
+                    sceneManager.inputManager.shotInProgress = false;
+                }
+            
+            }, 2000);
                 return false
             }
             else {
@@ -250,6 +262,7 @@ function resolvePinPlano(dt, pin, plane) {
         let sceneManager = new SceneManager();
         sceneManager.objects = sceneManager.objects.filter(object => {
             if (object == pin) {
+                sceneManager.outPins++;
                 return false
             }
             else {

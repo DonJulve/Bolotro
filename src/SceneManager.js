@@ -24,6 +24,7 @@ export class SceneManager {
         this.firstThrowPins = 0;
         this.secondThrowPins = 0;
         this.isFirstThrow = true;
+        this.outPins = 0;
 
         SceneManager.instance = this;
     }
@@ -41,7 +42,7 @@ export class SceneManager {
             }
         });
 
-        const spacing = 2; // Separación entre pines (ajústalo como quieras)
+        const spacing = 1.5; // Separación entre pines (ajústalo como quieras)
         let startX = 0; 
         let startZ = 5; // Primer bolo en (0, 0)
         let count = 0; 
@@ -110,8 +111,9 @@ export class SceneManager {
     }
 
     registerThrow() {
-        const fallenPins = this.countFallenPins();
+        let fallenPins = this.countFallenPins();
         let shouldResetPins = false;
+        fallenPins += this.outPins;
         
         if (this.isFirstThrow) {
             this.firstThrowPins = fallenPins;
@@ -135,6 +137,7 @@ export class SceneManager {
         }
         
         this.updateScoreTable();
+        this.outPins = 0;
 
         if (this.scoreManager.isGameOver()) {
             this.showGameOver();

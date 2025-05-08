@@ -291,6 +291,8 @@ export class Pin {
             
             // Configurar transformación inicial del modelo visual
             this.visualModelMatrix = mat4();
+
+            this.visualModelMatrix = mult(this.visualModelMatrix, translate(0, -1, 0));
             
             // 1. Aplicar escalado
             this.visualModelMatrix = mult(this.visualModelMatrix, scale(

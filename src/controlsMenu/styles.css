@@ -72,6 +72,12 @@ body {
     margin-right: 20px;
     text-align: center;
     box-shadow: 0 0 10px rgba(0, 221, 255, 0.5);
+    font-size: 1.2em; /* Aumenta un poco el tamaño de las flechas */
+    letter-spacing: 2px; /* Espaciado entre flechas */
+    text-shadow: 
+        0 0 1px currentColor,
+        0 0 1px currentColor,
+        0 0 1px currentColor;
 }
 
 .description {
@@ -156,8 +162,8 @@ button:active {
     }
     
     .key {
-        min-width: 120px;
-        font-size: 0.9rem;
+        letter-spacing: 1px;
+        font-size: 1.1em;
     }
     
     .description {
