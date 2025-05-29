@@ -39,6 +39,7 @@ export class BowlingBall {
         this.radius = 0.5;
 
         this.arrow = new Arrow(this.position, this.velocity);
+        this.initialArrowVisible = true;
 
         // Propiedad para evitar bugs de colisones infinitas
         // Un bolo colisiona como máximo una vex con un pin
@@ -84,6 +85,11 @@ export class BowlingBall {
         this.programInfo = pInfo;
         this.arrow.setProgramInfo(pInfo);
     }
+    
+    setInitialArrowVisibility(visible) {
+        this.initialArrowVisible = visible;
+    }
+
     showArrow(visible) {
         this.arrow.setVisibility(visible);
     }
@@ -108,7 +114,7 @@ export class BowlingBall {
         this.positionNextFrame = vec3(0, 0, 0);
 
         this.arrow.reset();
-        this.showArrow(true);
+        this.showArrow(this.initialArrowVisible);
 
         // Añadir bola a la escena si no está
         let sceneManager = new SceneManager();

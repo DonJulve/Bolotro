@@ -83,14 +83,44 @@
             gap: 12px;
             min-width: 150px;
         }  
+
+        #arrow-button {
+            position: absolute; 
+            top: 200px; 
+            left: 20px; 
+            background: linear-gradient(90deg, #1e90ff 0%, #ff69b4 100%); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            padding: 16px 28px; 
+            font-family: Arial, sans-serif; 
+            font-size: 20px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            z-index: 100; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+            min-width: 150px;
+        }
+
+        #arrow-button.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
         
-        #music-button:hover, #sound-button:hover, #background-button:hover {
+        #music-button:hover, #sound-button:hover, #background-button:hover, #arrow-button:hover {
             background: linear-gradient(90deg, #1a7fd8 0%, #e05294 100%);
             transform: scale(1.05);
             box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
 
-        #music-button:active, #sound-button:active, #background-button:active {
+        #music-button:active, #sound-button:active, #background-button:active, #arrow-button:active {
             transform: scale(0.98);
         }
     </style>
@@ -105,6 +135,8 @@
   <button id="music-button">▶ Música</button>
   <button id="sound-button">🔇 Sonido</button>
   <button id="background-button">🎨 Cambiar fondo pista</button>
+  <button id="arrow-button">🎯 Ocultar flecha</button>
+</button>
 
   <div id="force-container" style="position: absolute; bottom: 20px; left: 20px; background: linear-gradient(90deg, #1e90ff 0%, #ff69b4 100%); padding: 10px; border-radius: 5px; color: white; font-family: Arial, sans-serif;">
     <div style="margin-bottom: 5px;">Fuerza de lanzamiento:</div>
@@ -294,6 +326,52 @@
       });
   </script>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const arrowButton = document.getElementById('arrow-button');
+        let arrowVisible = true;
+
+        // Función para actualizar la visibilidad del botón
+        function updateArrowButtonVisibility() {
+            const inputManager = window.sceneManager?.inputManager;
+            if (inputManager && inputManager.shotInProgress) {
+                arrowButton.classList.add('hidden');
+            } else {
+                arrowButton.classList.remove('hidden');
+            }
+        }
+
+        arrowButton.addEventListener('click', function() {
+            // Verificar si hay un tiro en progreso (aunque el botón debería estar oculto)
+            const inputManager = window.sceneManager?.inputManager;
+            if (inputManager && inputManager.shotInProgress) {
+                return;
+            }
+            
+            arrowVisible = !arrowVisible;
+            
+            // Actualizar el estado de la flecha y su configuración inicial
+            const bowlingBall = window.sceneManager?.getBowlingBall();
+            if (bowlingBall) {
+                bowlingBall.showArrow(arrowVisible);
+                bowlingBall.setInitialArrowVisibility(arrowVisible);
+            }
+            
+            // Cambiar el texto del botón
+            arrowButton.textContent = arrowVisible ? '🎯 Ocultar flecha' : '🎯 Mostrar flecha';
+        });
+
+        // Configurar estado inicial
+        if (window.sceneManager?.getBowlingBall()) {
+            // Sincronizar con el estado actual de la flecha
+            arrowVisible = window.sceneManager.getBowlingBall().arrow.shouldRender;
+            arrowButton.textContent = arrowVisible ? '🎯 Ocultar flecha' : '🎯 Mostrar flecha';
+        }
+
+        // Verificar periódicamente el estado del tiro
+        setInterval(updateArrowButtonVisibility, 100);
+    });
+  </script>
 
 	<!-- Vertex shader -->
 	<script id="plane-vertex-shader" type="x-shader/x-vertex">
