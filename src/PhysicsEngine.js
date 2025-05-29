@@ -235,8 +235,21 @@ function resolvePinBall (dt, pin, ball) {
 }
 
 function resolveBallPlano(dt, ball, plano) {
+    const horizontalVelocity = Math.sqrt(ball.velocity[0]**2 + ball.velocity[2]**2);
+    const isInContact = ball.position[1] <= ball.radius + 0.01;
+    const isRolling = isInContact && horizontalVelocity > 0.5;
+    
+    if (typeof window.controlRollingSound === 'function') {
+        window.controlRollingSound(isRolling, horizontalVelocity);
+    }
+
     // Nos hemos salido del plano
     if (Math.abs(ball.position[0]) > 30 || Math.abs(ball.position[2]) > 10) {
+        // Detener sonido si la bola sale del plano
+        if (typeof window.controlRollingSound === 'function') {
+            window.controlRollingSound(false, 0);
+        }
+
         // Borrar bola de la escena
         let sceneManager = new SceneManager();
         sceneManager.objects = sceneManager.objects.filter(object => {

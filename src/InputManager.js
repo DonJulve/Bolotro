@@ -82,6 +82,7 @@ export class InputManager {
             this.sceneManager.removeFalledPins();
             this.forceBar.reset();
             this.shotInProgress = false;
+            window.controlRollingSound(false, 0);
         }
         else if (estado == "SOLTADA") {
             // TODO

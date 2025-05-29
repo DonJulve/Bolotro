@@ -153,9 +153,14 @@
     </audio>
 
     <audio id="collision-sound">
-    <source src="../assets/collision.ogg" type="audio/ogg">
-    Tu navegador no soporta el elemento de audio.
-</audio>
+        <source src="../assets/collision.ogg" type="audio/ogg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+
+    <audio id="rolling-sound" loop>
+        <source src="../assets/rolling.ogg" type="audio/ogg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -183,7 +188,14 @@
       document.addEventListener('DOMContentLoaded', function() {
         const soundButton = document.getElementById('sound-button');
         const collisionSound = document.getElementById('collision-sound');
+        const rollingSound = document.getElementById('rolling-sound');
         let soundEnabled = false;
+
+        // Variables para controlar el decaimiento del sonido
+        let rollingStartTime = 0;
+        let decayFactor = 2.0;
+        const MAX_ROLLING_DURATION = 5000; // 5 segundos para decaimiento completo
+
 
         // Actualizar el texto del botón para reflejar el estado inicial
         soundButton.textContent = '🔇 Sonido';
@@ -191,6 +203,11 @@
         soundButton.addEventListener('click', function() {
             soundEnabled = !soundEnabled;
             soundButton.textContent = soundEnabled ? '🔊 Sonido' : '🔇 Sonido';
+
+            if (!soundEnabled) {
+                rollingSound.pause();
+                decayFactor = 2.0;
+            }
         });
 
         // Función global para reproducir sonido de colisión
@@ -208,7 +225,52 @@
                 }
             }
         };
-    });
+
+        // Función global para controlar el sonido de rodadura
+        window.controlRollingSound = function(shouldPlay, velocity) {
+        if (!soundEnabled) {
+            rollingSound.pause();
+            return;
+        }
+        try {
+            const currentTime = performance.now();
+            
+            if (shouldPlay) {
+                // Iniciar o continuar el sonido
+                if (rollingSound.paused) {
+                    rollingStartTime = currentTime;
+                    decayFactor = 2.0;
+                }
+                
+                // Calcular decaimiento basado en tiempo de contacto
+                const rollingDuration = currentTime - rollingStartTime;
+                decayFactor = Math.max(0.2, 1.0 - (rollingDuration / MAX_ROLLING_DURATION));
+                
+                // Ajustar volumen y pitch
+                const baseVolume = Math.min(velocity / 20, 0.7);
+                const volume = baseVolume * decayFactor;
+                const playbackRate = Math.min(Math.max(velocity / 10, 0.8), 1.5);
+                
+                rollingSound.volume = volume;
+                rollingSound.playbackRate = playbackRate;
+                
+                if (rollingSound.paused) {
+                    rollingSound.currentTime = 0;
+                    rollingSound.play().catch(error => {
+                        console.error('Error al reproducir sonido de rodadura:', error);
+                    });
+                }
+            } else {
+                // Resetear el decaimiento cuando no hay contacto
+                rollingStartTime = 0;
+                decayFactor = 2.0;
+                rollingSound.pause();
+            }
+        } catch (error) {
+            console.error('Error en controlRollingSound:', error);
+          }
+      };
+  });
   </script>
 
   <script>
