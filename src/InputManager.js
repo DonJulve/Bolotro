@@ -111,6 +111,7 @@ export class InputManager {
             const z = potencia * Math.cos(anguloTiroRadianes);
             this.bowlingBall.velocity = vec3(x, 0, z);
             this.bowlingBall.start = true;
+            this.bowlingBall.showArrow(false);
 
             this.shotInProgress = true;
         }

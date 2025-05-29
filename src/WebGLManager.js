@@ -42,6 +42,10 @@ export class WebGLManager {
         
         var objects = this.scene.getObjectsToDraw();
         for (let object of objects) {
+            if (object.shouldRender !== undefined && !object.shouldRender) {
+                continue;
+            }
+            
             // Renderizar modelo principal (OBJ o primitiva básica)
             if (object.visualPointsArray || object.pointsArray) {
                 const pointsToRender = object.visualPointsArray || object.pointsArray;

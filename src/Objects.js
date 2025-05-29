@@ -36,7 +36,9 @@ export class BowlingBall {
         this.positionNextFrame = vec3(0,0,0);
 
         // Propiedades exclusivas de la bola
-        this.radius = 0.5
+        this.radius = 0.5;
+
+        this.arrow = new Arrow(this.position, this.velocity);
 
         // Propiedad para evitar bugs de colisones infinitas
         // Un bolo colisiona como máximo una vex con un pin
@@ -75,10 +77,15 @@ export class BowlingBall {
     #updatePosition() {
         let transform = mult(translate(this.position[0], this.position[1], this.position[2]), this.orientation);
         this.uniforms.u_model = transform;
+        this.arrow.updatePosition(this.position, this.velocity);
     }
 
     setProgramInfo(pInfo) {
         this.programInfo = pInfo;
+        this.arrow.setProgramInfo(pInfo);
+    }
+    showArrow(visible) {
+        this.arrow.setVisibility(visible);
     }
 
     reset() {
@@ -100,11 +107,15 @@ export class BowlingBall {
         this.velocityNextFrame = vec3(0, 0, 0);
         this.positionNextFrame = vec3(0, 0, 0);
 
+        this.arrow.reset();
+        this.showArrow(true);
+
         // Añadir bola a la escena si no está
         let sceneManager = new SceneManager();
         if (!sceneManager.objects.includes(this)) {
             sceneManager.objects.push(this)
         }
+        this.arrow.updatePosition(this.position, this.velocity);
         this.#updatePosition();
     }
 
@@ -156,6 +167,9 @@ export class BowlingBall {
         const relativePos = subtract(this.position, camera.eye);
         const rotatedPos = mult(positionRotationMatrix, vec4(relativePos[0], relativePos[1], relativePos[2], 1.0));
         this.position = add(camera.eye, vec3(rotatedPos[0], rotatedPos[1], rotatedPos[2]));
+
+        // Rotamos la flecha también
+        this.arrow.rotateWithCamera(camera, direction, rotateStep);
     
         this.#updatePosition();
     }
@@ -487,5 +501,176 @@ export class Plano {
     applyNextFrame() {
         // El plano no se mueve
         return; 
+    }
+}
+
+export class Arrow {
+    constructor(position, direction) {
+        this.pointsArray = this.#createArrowGeometry();
+        this.uniforms = {
+            u_color: [1.0, 0.0, 0.0, 1.0],  // Color rojo
+            u_model: new mat4()
+        };
+        this.primType = "triangles";
+
+        this.shouldRender = true;
+
+        this.initialPosition = vec3(position[0], position[1], position[2]);
+        this.initialDirection = normalize(direction);
+        this.initialOrientation = mat4();
+        this.initialShouldRender = true;
+        
+        this.position = vec3(position[0], position[1], position[2]);
+        this.direction = normalize(direction);
+        this.relativeOffset = vec3(1.5, 0, 0);
+        this.orientation = mat4();
+        
+        this.#updateModelMatrix();
+    }
+
+    #createArrowGeometry() {
+        const points = [];
+        const length = 1.5;
+        const headLength = 0.3;
+        const shaftRadius = 0.05;
+        const headRadius = 0.1;
+        const segments = 8;
+        
+        // Cilindro (eje de la flecha) - Ahora en el eje Z
+        const shaftPoints = this.#createCylinder(shaftRadius, length - headLength, segments);
+        points.push(...shaftPoints);
+        
+        // Cono (punta de la flecha) - Ahora en el eje Z
+        const conePoints = this.#createCone(headRadius, headLength, segments);
+        // Mover el cono al final del cilindro en Z
+        const translatedCone = conePoints.map(p => {
+            return vec4(p[0], p[1], p[2] + (length - headLength), p[3]);
+        });
+        points.push(...translatedCone);
+        
+        return points;
+    }
+
+    #createCylinder(radius, height, segments) {
+        const points = [];
+        const angleStep = (2 * Math.PI) / segments;
+        
+        for (let i = 0; i < segments; i++) {
+            const angle1 = i * angleStep;
+            const angle2 = (i + 1) * angleStep;
+            
+            // Coordenadas de los vértices (ahora en el plano XY)
+            const x1 = radius * Math.cos(angle1);
+            const y1 = radius * Math.sin(angle1);
+            const x2 = radius * Math.cos(angle2);
+            const y2 = radius * Math.sin(angle2);
+            
+            // Triángulos para el lado del cilindro (orientado en Z)
+            // Triángulo 1
+            points.push(vec4(x1, y1, 0, 1));
+            points.push(vec4(x1, y1, height, 1));
+            points.push(vec4(x2, y2, height, 1));
+            
+            // Triángulo 2
+            points.push(vec4(x1, y1, 0, 1));
+            points.push(vec4(x2, y2, height, 1));
+            points.push(vec4(x2, y2, 0, 1));
+        }
+        
+        return points;
+    }
+
+    #createCone(radius, height, segments) {
+        const points = [];
+        const angleStep = (2 * Math.PI) / segments;
+        const apex = vec4(0, 0, height, 1); // Punta del cono en Z
+        
+        for (let i = 0; i < segments; i++) {
+            const angle1 = i * angleStep;
+            const angle2 = (i + 1) * angleStep;
+            
+            // Coordenadas de los vértices de la base (plano XY)
+            const x1 = radius * Math.cos(angle1);
+            const y1 = radius * Math.sin(angle1);
+            const x2 = radius * Math.cos(angle2);
+            const y2 = radius * Math.sin(angle2);
+            
+            // Triángulo (base + punta en Z)
+            points.push(vec4(x1, y1, 0, 1));
+            points.push(vec4(x2, y2, 0, 1));
+            points.push(apex);
+        }
+        
+        return points;
+    }
+
+    #updateModelMatrix() {
+        // Rotación para orientar la flecha hacia adelante (eje X positivo)
+        const rotX = rotate(45, vec3(-0.5, 0, 0));
+        const rotY = rotate(90, vec3(0, 1, 0));
+
+        // Aplicamos la orientación actual
+        const orientedY = mult(this.orientation, rotY);
+        const orientedX = mult(orientedY, rotX);
+
+        // Calculamos la posición final de la flecha
+        // Aplicamos la rotación al offset relativo
+        const rotatedOffset = mult(this.orientation, vec4(this.relativeOffset, 1));
+        
+        const translation = translate(
+            this.position[0] + rotatedOffset[0],
+            this.position[1] + rotatedOffset[1],
+            this.position[2] + rotatedOffset[2]
+        );
+
+        this.uniforms.u_model = mult(translation, orientedX);
+    }
+
+    rotateWithCamera(camera, direction, rotateStep) {
+        const selfRotationMatrix = direction ? 
+            rotate(-rotateStep, camera.up) : 
+            rotate(rotateStep, camera.up);
+    
+        // Aplicamos la rotación a la orientación de la flecha
+        this.orientation = mult(selfRotationMatrix, this.orientation);
+        this.#updateModelMatrix();
+    }
+
+    setProgramInfo(pInfo) {
+        this.programInfo = pInfo;
+    }
+
+    updatePosition(position, direction) {
+        this.position = vec3(position[0], position[1], position[2]);
+        this.direction = normalize(direction);
+        this.#updateModelMatrix();
+    }
+
+    setVisibility(visible) {
+        this.shouldRender = visible;
+    }
+
+    reset() {
+        this.position = vec3(
+            this.initialPosition[0],
+            this.initialPosition[1],
+            this.initialPosition[2]
+        );
+        this.direction = vec3(
+            this.initialDirection[0],
+            this.initialDirection[1],
+            this.initialDirection[2]
+        );
+        this.orientation = mat4();
+        this.shouldRender = this.initialShouldRender;
+        this.#updateModelMatrix();
+    }
+
+    calculateNextFrame() {
+        // La flecha es estática por ahora
+    }
+
+    applyNextFrame() {
+        // La flecha es estática por ahora
     }
 }

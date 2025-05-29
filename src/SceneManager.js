@@ -92,6 +92,7 @@ export class SceneManager {
         // Añadirlos a la escena
         this.objects.push(plano);
         this.objects.push(bowlingBall);
+        this.objects.push(bowlingBall.arrow);
 
         webGLManager.setPrimitives(this.objects);
     }
@@ -193,6 +194,10 @@ export class SceneManager {
         // Resetear la bola
         if (this.bowlingBall) {
             this.bowlingBall.reset();
+        }
+
+        if (this.bowlingBall && !this.objects.includes(this.bowlingBall.arrow)) {
+            this.objects.push(this.bowlingBall.arrow);
         }
     
         webGLManager.setPrimitives(this.objects);
