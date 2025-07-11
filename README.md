@@ -11,7 +11,7 @@ Este repositorio contiene un videojuego de Bolos 3D compatible para cualquier OS
 ![overview2](/Screenshots/overview2.png "overview1")
 
 ### Juego
-![overview3](/Screenshots/overview1.png "overview3")
+![overview3](/Screenshots/overview3.png "overview3")
 
 ## Contenido
 
